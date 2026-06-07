@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SevenFX — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07091e;
+  --bg2:     #0d1035;
+  --bg3:     #12164a;
+  --surface: rgba(255,255,255,0.055);
+  --surface2:rgba(255,255,255,0.10);
+  --border:  rgba(100,120,255,0.12);
+  --border2: rgba(120,140,255,0.22);
+  --accent:  #6c63ff;
+  --accent2: #4f46e5;
+  --accent3: #00d4ff;
+  --gold:    #fbbf24;
+  --text:    #f0f4ff;
+  --text2:   #a0aed8;
+  --text3:   #4a5890;
+  --red:     #f87171;
+  --green:   #34d399;
+  --purple:  #a78bfa;
+  --font-display:'Syne',sans-serif;
+  --font-body:   'DM Sans',sans-serif;
+  --font-mono:   'DM Mono',monospace;
+  --radius:  12px;
+  --radius2: 20px;
+  --glow:    0 0 60px rgba(108,99,255,0.30);
+  --shadow:  0 24px 64px rgba(0,0,0,0.65);
+  --grad1:   linear-gradient(135deg,#6c63ff,#00d4ff);
+  --grad2:   linear-gradient(135deg,#00d4ff,#6c63ff,#a78bfa);
+  --sidebar-w: 240px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;overflow-x:hidden;min-height:100vh;}
+a{color:inherit;text-decoration:none;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px;}
+
+/* ── ACCESS DENIED / LOADING SCREEN ── */
+#accessScreen {
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:20px;
+  transition:opacity .4s;
+}
+#accessScreen.hide{opacity:0;pointer-events:none;}
+.access-logo{font-family:var(--font-display);font-size:2rem;font-weight:800;letter-spacing:.05em;}
+.access-logo span{color:var(--accent);text-shadow:0 0 20px rgba(108,99,255,.6);}
+.access-spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.access-msg{color:var(--text2);font-size:.9rem;}
+.access-denied-box{
+  background:var(--bg2);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius2);
+  padding:40px 48px;text-align:center;max-width:420px;width:90%;
+  box-shadow:0 0 40px rgba(248,113,113,.12);
+}
+.access-denied-box h2{font-family:var(--font-display);font-size:1.5rem;color:var(--red);margin-bottom:10px;}
+.access-denied-box p{color:var(--text2);font-size:.9rem;margin-bottom:22px;}
+.access-denied-box a{
+  display:inline-block;padding:10px 28px;
+  background:var(--grad1);color:#fff;border-radius:30px;
+  font-weight:700;font-size:.875rem;
+  transition:opacity .2s;
+}
+.access-denied-box a:hover{opacity:.85;}
+
+/* ── LAYOUT ── */
+#adminApp{display:none;min-height:100vh;}
+#adminApp.show{display:flex;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar-w);
+  min-height:100vh;
+  background:rgba(13,16,53,0.98);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;
+  z-index:100;
+  transition:transform .3s;
+}
+.sidebar-logo{
+  padding:22px 24px 18px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo .logo-text{
+  font-family:var(--font-display);font-size:1.3rem;font-weight:800;letter-spacing:.05em;
+}
+.sidebar-logo .logo-text span{color:var(--accent);text-shadow:0 0 16px rgba(108,99,255,.5);}
+.sidebar-logo .logo-sub{font-size:.68rem;color:var(--text3);margin-top:2px;letter-spacing:.04em;text-transform:uppercase;}
+.sidebar-admin-badge{
+  display:inline-block;margin-top:8px;
+  padding:2px 10px;background:rgba(251,191,36,.1);
+  border:1px solid rgba(251,191,36,.25);border-radius:20px;
+  font-size:.65rem;color:var(--gold);font-weight:700;letter-spacing:.06em;
+}
+.sidebar-nav{flex:1;padding:14px 0;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 22px;
+  font-size:.845rem;font-weight:500;
+  color:var(--text2);
+  cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all .2s;
+  user-select:none;
+}
+.nav-item:hover{color:var(--text);background:rgba(108,99,255,.08);}
+.nav-item.active{
+  color:var(--accent3);
+  background:rgba(108,99,255,.12);
+  border-left-color:var(--accent);
+}
+.nav-item .ni{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+.nav-separator{height:1px;background:var(--border);margin:8px 16px;}
+.sidebar-footer{
+  padding:14px 22px;
+  border-top:1px solid var(--border);
+}
+.admin-user-info{
+  display:flex;align-items:center;gap:9px;margin-bottom:12px;
+}
+.admin-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--grad1);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:.8rem;color:#fff;flex-shrink:0;
+}
+.admin-email{font-size:.72rem;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px;}
+.logout-btn{
+  width:100%;padding:8px;
+  background:rgba(248,113,113,.08);
+  border:1px solid rgba(248,113,113,.2);
+  border-radius:var(--radius);
+  color:var(--red);font-size:.78rem;font-weight:600;
+  cursor:pointer;font-family:var(--font-body);
+  transition:all .2s;
+}
+.logout-btn:hover{background:rgba(248,113,113,.16);}
+
+/* ── TOPBAR ── */
+.topbar{
+  position:fixed;top:0;left:var(--sidebar-w);right:0;
+  height:60px;z-index:90;
+  background:rgba(7,9,30,.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+}
+.topbar-title{font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-time{font-family:var(--font-mono);font-size:.75rem;color:var(--text3);}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 2s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── MAIN CONTENT ── */
+.main{
+  margin-left:var(--sidebar-w);
+  padding-top:60px;
+  min-height:100vh;
+  flex:1;
+}
+.section{display:none;padding:28px;}
+.section.active{display:block;}
+
+/* ── SECTION HEADER ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:24px;flex-wrap:wrap;gap:12px;
+}
+.section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;}
+.section-sub{font-size:.8rem;color:var(--text3);margin-top:2px;}
+.refresh-btn{
+  padding:7px 16px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:8px;
+  color:var(--text2);font-size:.8rem;font-family:var(--font-body);font-weight:600;
+  cursor:pointer;transition:all .2s;
+}
+.refresh-btn:hover{color:var(--text);border-color:var(--accent);}
+
+/* ── STAT CARDS ── */
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+  gap:16px;
+  margin-bottom:28px;
+}
+.stat-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  padding:20px 22px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .2s,transform .2s;
+}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad1);
+}
+.stat-label{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.stat-val{font-family:var(--font-display);font-size:2rem;font-weight:800;color:var(--text);}
+.stat-icon{position:absolute;right:16px;top:16px;font-size:1.4rem;opacity:.4;}
+
+/* ── TABLE ── */
+.table-wrap{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius2);
+  overflow:hidden;
+}
+.table-toolbar{
+  padding:14px 20px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+}
+.search-input{
+  flex:1;min-width:200px;
+  padding:8px 14px;
+  background:var(--surface);
+  border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);font-family:var(--font-body);font-size:.83rem;
+  outline:none;transition:border-color .2s;
+}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--text3);}
+.filter-select{
+  padding:7px 12px;background:var(--surface);
+  border:1px solid var(--border2);border-radius:8px;
+  color:var(--text2);font-family:var(--font-body);font-size:.8rem;
+  outline:none;cursor:pointer;
+}
+.filter-select option{background:var(--bg2);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:rgba(108,99,255,.07);}
+th{
+  padding:11px 16px;text-align:left;
+  font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text3);font-weight:600;white-space:nowrap;
+  border-bottom:1px solid var(--border);
+}
+td{
+  padding:12px 16px;
+  font-size:.82rem;color:var(--text2);
+  border-bottom:1px solid rgba(255,255,255,.035);
+  vertical-align:middle;
+}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(108,99,255,.04);}
+.empty-row{text-align:center;color:var(--text3);padding:32px!important;font-size:.85rem;}
+
+/* ── BADGES ── */
+.badge{
+  display:inline-block;padding:3px 10px;
+  border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap;
+}
+.badge-approved,.badge-active{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.28);color:var(--green);}
+.badge-pending{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--gold);}
+.badge-rejected,.badge-inactive,.badge-suspended{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.badge-admin{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:var(--purple);}
+.badge-user{background:var(--surface2);border:1px solid var(--border2);color:var(--text3);}
+.badge-locked{background:rgba(74,88,144,.15);border:1px solid var(--border);color:var(--text3);}
+
+/* ── ACTION BUTTONS ── */
+.action-btn{
+  padding:5px 11px;border-radius:7px;
+  font-size:.72rem;font-weight:700;font-family:var(--font-body);
+  cursor:pointer;border:1px solid;transition:all .2s;margin:2px;white-space:nowrap;
+}
+.btn-approve{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:var(--green);}
+.btn-approve:hover{background:rgba(52,211,153,.2);}
+.btn-reject{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--red);}
+.btn-reject:hover{background:rgba(248,113,113,.2);}
+.btn-grant{background:rgba(108,99,255,.1);border-color:rgba(108,99,255,.3);color:var(--accent);}
+.btn-grant:hover{background:rgba(108,99,255,.2);}
+.btn-revoke{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.25);color:var(--gold);}
+.btn-revoke:hover{background:rgba(251,191,36,.18);}
+.btn-suspend{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);color:var(--red);}
+.btn-suspend:hover{background:rgba(248,113,113,.16);}
+.btn-activate{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.2);color:var(--green);}
+.btn-activate:hover{background:rgba(52,211,153,.16);}
+.btn-view{background:var(--surface);border-color:var(--border2);color:var(--text2);}
+.btn-view:hover{border-color:var(--accent3);color:var(--accent3);}
+.btn-primary{
+  padding:9px 20px;background:var(--grad1);
+  border:none;border-radius:var(--radius);
+  color:#fff;font-weight:700;font-size:.83rem;font-family:var(--font-body);
+  cursor:pointer;transition:opacity .2s;
+}
+.btn-primary:hover{opacity:.85;}
+
+/* ── ANNOUNCEMENT COMPOSER ── */
+.compose-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:24px;margin-bottom:24px;
+}
+.compose-box h3{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:14px;}
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.form-field{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+.form-input,.form-select,.form-textarea{
+  padding:9px 14px;background:var(--surface);
+  border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);font-family:var(--font-body);font-size:.85rem;
+  outline:none;transition:border-color .2s;
+}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+.form-select option{background:var(--bg2);}
+.form-textarea{resize:vertical;min-height:80px;}
+
+/* ── COURSE GRID ── */
+.course-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;
+}
+.course-card-admin{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:22px;
+  position:relative;transition:border-color .2s;
+}
+.course-card-admin:hover{border-color:var(--border2);}
+.course-card-admin::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--grad1);border-radius:var(--radius2) var(--radius2) 0 0;
+}
+.cc-name{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:6px;}
+.cc-sub{font-size:.77rem;color:var(--text3);margin-bottom:14px;}
+.cc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+
+/* ── COMMUNITY LINKS ── */
+.community-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;
+}
+.community-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:22px;
+  transition:border-color .2s;
+}
+.community-card:hover{border-color:var(--border2);}
+.comm-icon{font-size:2rem;margin-bottom:10px;}
+.comm-name{font-family:var(--font-display);font-size:.95rem;font-weight:700;margin-bottom:6px;}
+.comm-url{font-family:var(--font-mono);font-size:.72rem;color:var(--text3);word-break:break-all;margin-bottom:12px;}
+
+/* ── SETTINGS ── */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.settings-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;
+}
+.settings-card h3{font-family:var(--font-display);font-size:.95rem;font-weight:700;margin-bottom:16px;color:var(--accent3);}
+
+/* ── AUDIT LOG ── */
+.audit-timeline{display:flex;flex-direction:column;gap:10px;}
+.audit-item{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 18px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color .2s;
+}
+.audit-item:hover{border-color:var(--border2);}
+.audit-icon{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(108,99,255,.12);
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;
+}
+.audit-info{flex:1;}
+.audit-action{font-weight:600;font-size:.85rem;margin-bottom:2px;}
+.audit-meta{font-size:.73rem;color:var(--text3);}
+.audit-time{font-family:var(--font-mono);font-size:.7rem;color:var(--text3);white-space:nowrap;}
+
+/* ── NOTIFICATION ── */
+#adminNotif{
+  position:fixed;top:70px;right:20px;z-index:9999;
+  padding:12px 20px;border-radius:var(--radius);
+  font-size:.83rem;font-weight:600;
+  box-shadow:var(--shadow);
+  transform:translateX(110%);transition:transform .3s;
+  max-width:340px;
+}
+#adminNotif.show{transform:translateX(0);}
+#adminNotif.notif-ok{background:rgba(52,211,153,.15);border:1px solid rgba(52,211,153,.3);color:var(--green);}
+#adminNotif.notif-err{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.3);color:var(--red);}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius2);padding:30px;width:min(520px,94vw);
+  box-shadow:var(--shadow);animation:modalIn .25s ease;
+}
+@keyframes modalIn{from{transform:scale(.96);opacity:0;}to{transform:scale(1);opacity:1;}}
+.modal-title{font-family:var(--font-display);font-size:1.1rem;font-weight:700;margin-bottom:16px;}
+.modal-close{float:right;background:none;border:none;color:var(--text2);cursor:pointer;font-size:1.2rem;margin-top:-4px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+/* ── HAMBURGER (mobile) ── */
+.sidebar-toggle{display:none;}
+@media(max-width:768px){
+  :root{--sidebar-w:0px;}
+  .sidebar{transform:translateX(-240px);--sidebar-w:240px;}
+  .sidebar.mobile-open{transform:translateX(0);}
+  .topbar{left:0;}
+  .main{margin-left:0;}
+  .sidebar-toggle{
+    display:flex;align-items:center;justify-content:center;
+    width:36px;height:36px;background:var(--surface2);
+    border:1px solid var(--border2);border-radius:8px;
+    cursor:pointer;font-size:1rem;
+  }
+  .section{padding:16px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .stat-val{font-size:1.5rem;}
+}
+
+/* ── REVENUE PLACEHOLDER ── */
+.revenue-placeholder{
+  background:linear-gradient(135deg,rgba(108,99,255,.08),rgba(0,212,255,.05));
+  border:1px dashed var(--border2);border-radius:var(--radius2);
+  padding:40px;text-align:center;color:var(--text3);font-size:.85rem;
+}
+
+/* ── GLOWING GRADIENT TEXT ── */
+.grad-text{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* scrollable table body */
+.scrollable-table{max-height:520px;overflow-y:auto;}
+</style>
+</head>
+<body>
+
+<!-- ── ACCESS SCREEN ── -->
+<div id="accessScreen">
+  <div class="access-logo">Seven<span>FX</span></div>
+  <div class="access-spinner"></div>
+  <div class="access-msg" id="accessMsg">Verifying admin credentials…</div>
+</div>
+
+<!-- ── ADMIN APP ── -->
+<div id="adminApp">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Seven<span>FX</span></div>
+      <div class="logo-sub">Admin Dashboard</div>
+      <div class="sidebar-admin-badge">⚙ ADMIN ACCESS</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-section="dashboard" onclick="showSection('dashboard',this)">
+        <span class="ni">📊</span> Dashboard
+      </div>
+      <div class="nav-item" data-section="users" onclick="showSection('users',this)">
+        <span class="ni">👥</span> Users
+      </div>
+      <div class="nav-item" data-section="payments" onclick="showSection('payments',this)">
+        <span class="ni">💳</span> Payments
+      </div>
+      <div class="nav-item" data-section="access" onclick="showSection('access',this)">
+        <span class="ni">🔑</span> Course Access
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" data-section="courses" onclick="showSection('courses',this)">
+        <span class="ni">📚</span> Courses
+      </div>
+      <div class="nav-item" data-section="announcements" onclick="showSection('announcements',this)">
+        <span class="ni">📢</span> Announcements
+      </div>
+      <div class="nav-item" data-section="community" onclick="showSection('community',this)">
+        <span class="ni">🌐</span> Community
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" data-section="settings" onclick="showSection('settings',this)">
+        <span class="ni">⚙️</span> Settings
+      </div>
+      <div class="nav-item" data-section="auditlogs" onclick="showSection('auditlogs',this)">
+        <span class="ni">📋</span> Audit Logs
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-user-info">
+        <div class="admin-avatar" id="sidebarAvatar">A</div>
+        <div class="admin-email" id="sidebarEmail">—</div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">↩ Log Out</button>
+    </div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-dot"></div>
+      <div class="topbar-time" id="topbarClock"></div>
+      <a id="homeLink" href="#" style="font-size:.78rem;color:var(--text3);padding:4px 10px;border:1px solid var(--border);border-radius:6px;">← Website</a>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="section active" id="sec-dashboard">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Welcome back, <span class="grad-text" id="dashAdminName">Admin</span></div>
+          <div class="section-sub">SevenFX Operations Center — Real-time overview</div>
+        </div>
+        <button class="refresh-btn" onclick="loadDashboard()">⟳ Refresh</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Total Users</div><div class="stat-val" id="ds-users">—</div></div>
+        <div class="stat-card"><div class="stat-icon">💳</div><div class="stat-label">Total Payments</div><div class="stat-val" id="ds-payments">—</div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Pending Approvals</div><div class="stat-val" id="ds-pending">—</div></div>
+        <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Approved Users</div><div class="stat-val" id="ds-approved">—</div></div>
+        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-label">Active Courses</div><div class="stat-val" id="ds-courses">5</div></div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Revenue Tracker</div>
+          <div class="stat-val" style="font-size:1rem;color:var(--text3);">Coming Soon</div>
+        </div>
+      </div>
+
+      <!-- Quick recent payments -->
+      <div style="margin-bottom:16px;">
+        <div style="font-family:var(--font-display);font-size:.95rem;font-weight:700;margin-bottom:14px;">🕐 Recent Payments</div>
+        <div class="table-wrap">
+          <div class="scrollable-table">
+            <table>
+              <thead><tr><th>Date</th><th>Email</th><th>Course</th><th>Method</th><th>Status</th><th>Action</th></tr></thead>
+              <tbody id="dashRecentPayments"><tr><td colspan="6" class="empty-row">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ USERS ══ -->
+    <div class="section" id="sec-users">
+      <div class="section-header">
+        <div><div class="section-title">Users</div><div class="section-sub">Manage registered accounts</div></div>
+        <button class="refresh-btn" onclick="loadUsers()">⟳ Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input class="search-input" type="text" placeholder="Search by name or email…" oninput="filterUsers(this.value)" id="userSearch">
+          <select class="filter-select" onchange="filterUsersByRole(this.value)">
+            <option value="">All Roles</option>
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+          </select>
+          <select class="filter-select" onchange="filterUsersByStatus(this.value)">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="scrollable-table">
+          <table>
+            <thead><tr><th>Joined</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"><tr><td colspan="7" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAYMENTS ══ -->
+    <div class="section" id="sec-payments">
+      <div class="section-header">
+        <div><div class="section-title">Payments</div><div class="section-sub">Review and approve payment submissions</div></div>
+        <div style="display:flex;gap:8px;">
+          <select class="filter-select" id="payStatusFilter" onchange="loadPayments()">
+            <option value="">All Status</option>
+            <option value="pending" selected>Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <button class="refresh-btn" onclick="loadPayments()">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="scrollable-table">
+          <table>
+            <thead><tr><th>Date</th><th>User</th><th>Email</th><th>Course</th><th>Method</th><th>Ref</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="paymentsBody"><tr><td colspan="8" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ COURSE ACCESS ══ -->
+    <div class="section" id="sec-access">
+      <div class="section-header">
+        <div><div class="section-title">Course Access Control</div><div class="section-sub">Grant or revoke access to individual courses</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select class="filter-select" id="accessCourseFilter" onchange="loadAccess()">
+            <option value="">All Courses</option>
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+            <option value="propfirm">Prop Firm</option>
+            <option value="mentorship">Mentorship</option>
+          </select>
+          <select class="filter-select" id="accessStatusFilter" onchange="loadAccess()">
+            <option value="">All Status</option>
+            <option value="true">Granted</option>
+            <option value="false">Revoked</option>
+          </select>
+          <button class="refresh-btn" onclick="loadAccess()">⟳ Refresh</button>
+          <button class="btn-primary" onclick="openGrantModal()">+ Grant Access</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="scrollable-table">
+          <table>
+            <thead><tr><th>Date</th><th>User Email</th><th>Course</th><th>Status</th><th>Approved By</th><th>Actions</th></tr></thead>
+            <tbody id="accessBody"><tr><td colspan="6" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ COURSES ══ -->
+    <div class="section" id="sec-courses">
+      <div class="section-header">
+        <div><div class="section-title">Course Management</div><div class="section-sub">Enable, disable, or lock individual courses</div></div>
+        <button class="refresh-btn" onclick="loadCourses()">⟳ Refresh</button>
+      </div>
+      <div class="course-grid" id="courseGrid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- ══ ANNOUNCEMENTS ══ -->
+    <div class="section" id="sec-announcements">
+      <div class="section-header">
+        <div><div class="section-title">Announcements</div><div class="section-sub">Publish notices to your students</div></div>
+        <button class="refresh-btn" onclick="loadAnnouncements()">⟳ Refresh</button>
+      </div>
+      <div class="compose-box">
+        <h3>📢 New Announcement</h3>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Title</label>
+            <input class="form-input" type="text" id="annTitle" placeholder="e.g. New Webinar Scheduled">
+          </div>
+          <div class="form-field" style="max-width:180px;">
+            <label class="form-label">Type</label>
+            <select class="form-select" id="annType">
+              <option value="general">General</option>
+              <option value="course">Course Update</option>
+              <option value="webinar">Webinar</option>
+              <option value="holiday">Market Holiday</option>
+              <option value="community">Community</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">Message</label>
+            <textarea class="form-textarea" id="annBody" placeholder="Write your announcement here…"></textarea>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="postAnnouncement()">Publish Announcement</button>
+      </div>
+      <div id="announcementsList" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+
+    <!-- ══ COMMUNITY ══ -->
+    <div class="section" id="sec-community">
+      <div class="section-header">
+        <div><div class="section-title">Community Links</div><div class="section-sub">Manage social platform links</div></div>
+        <button class="refresh-btn" onclick="loadCommunity()">⟳ Refresh</button>
+      </div>
+      <div class="community-grid" id="communityGrid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div class="section" id="sec-settings">
+      <div class="section-header">
+        <div><div class="section-title">Settings</div><div class="section-sub">Platform configuration</div></div>
+        <button class="btn-primary" onclick="saveSettings()">💾 Save All Settings</button>
+      </div>
+      <div class="settings-grid">
+        <div class="settings-card">
+          <h3>🏢 Site Info</h3>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Site Name</label>
+            <input class="form-input" id="cfg-siteName" type="text" value="SevenFX">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Contact Email</label>
+            <input class="form-input" id="cfg-contactEmail" type="email" placeholder="admin@sevenfx.com">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Telegram Username</label>
+            <input class="form-input" id="cfg-telegram" type="text" placeholder="@Seven7FxAcademy">
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>💰 Course Pricing</h3>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Beginner (ETB)</label>
+            <input class="form-input" id="cfg-price-beginner" type="text" placeholder="e.g. 1,500 ETB">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Intermediate (ETB)</label>
+            <input class="form-input" id="cfg-price-intermediate" type="text" placeholder="e.g. 2,500 ETB">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Advanced (ETB)</label>
+            <input class="form-input" id="cfg-price-advanced" type="text" placeholder="e.g. 3,500 ETB">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Prop Firm (ETB)</label>
+            <input class="form-input" id="cfg-price-propfirm" type="text" placeholder="e.g. 4,500 ETB">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Mentorship (ETB)</label>
+            <input class="form-input" id="cfg-price-mentorship" type="text" placeholder="e.g. 8,000 ETB">
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>💳 Payment Methods</h3>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">CBE Account</label>
+            <input class="form-input" id="cfg-cbe" type="text" placeholder="Account number">
+          </div>
+          <div class="form-field" style="margin-bottom:12px;">
+            <label class="form-label">Telebirr</label>
+            <input class="form-input" id="cfg-telebirr" type="text" placeholder="Phone number">
+          </div>
+          <div class="form-field">
+            <label class="form-label">Other Method</label>
+            <input class="form-input" id="cfg-other" type="text" placeholder="e.g. PayPal email">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT LOGS ══ -->
+    <div class="section" id="sec-auditlogs">
+      <div class="section-header">
+        <div><div class="section-title">Audit Logs</div><div class="section-sub">All admin actions are recorded here</div></div>
+        <button class="refresh-btn" onclick="loadAuditLogs()">⟳ Refresh</button>
+      </div>
+      <div class="audit-timeline" id="auditTimeline">
+        <div class="empty-row" style="text-align:center;color:var(--text3);padding:24px;">Loading…</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── GRANT ACCESS MODAL ── -->
+<div class="modal-overlay" id="grantModal" onclick="if(event.target===this)closeGrantModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeGrantModal()">✕</button>
+    <div class="modal-title">🔑 Grant Course Access</div>
+    <div class="form-field" style="margin-bottom:12px;">
+      <label class="form-label">User Email</label>
+      <input class="form-input" id="grantEmail" type="email" placeholder="user@example.com">
+    </div>
+    <div class="form-field" style="margin-bottom:12px;">
+      <label class="form-label">User UID (from Firestore)</label>
+      <input class="form-input" id="grantUID" type="text" placeholder="Firebase UID">
+    </div>
+    <div class="form-field">
+      <label class="form-label">Course</label>
+      <select class="form-select" id="grantCourse">
+        <option value="beginner">Beginner Trading Course</option>
+        <option value="intermediate">Intermediate Trading Course</option>
+        <option value="advanced">Advanced Trading Course</option>
+        <option value="propfirm">Prop Firm Trading Program</option>
+        <option value="mentorship">Mentorship</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="action-btn btn-view" onclick="closeGrantModal()">Cancel</button>
+      <button class="btn-primary" onclick="manualGrantAccess()">Grant Access</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── USER DETAIL MODAL ── -->
+<div class="modal-overlay" id="userModal" onclick="if(event.target===this)closeUserModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeUserModal()">✕</button>
+    <div class="modal-title" id="userModalTitle">User Profile</div>
+    <div id="userModalBody" style="color:var(--text2);font-size:.85rem;line-height:1.8;"></div>
+    <div class="modal-footer">
+      <button class="action-btn btn-view" onclick="closeUserModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAYMENT DETAIL MODAL ── -->
+<div class="modal-overlay" id="payModal" onclick="if(event.target===this)closePayModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closePayModal()">✕</button>
+    <div class="modal-title">Payment Details</div>
+    <div id="payModalBody" style="color:var(--text2);font-size:.85rem;line-height:1.9;"></div>
+    <div class="modal-footer">
+      <button class="action-btn btn-view" onclick="closePayModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── NOTIFICATION ── -->
+<div id="adminNotif"></div>
+
+<!-- ── FIREBASE + LOGIC ── -->
+<script>
+// Set the home link immediately before Firebase loads (non-module, runs synchronously)
+(function() {
+  const here = window.location.href;
+  const homeURL = here.includes('admin.html')
+    ? here.replace(/admin\.html.*$/, 'index.html')
+    : 'https://sevenfx.firebaseapp.com';
+  const el = document.getElementById('homeLink');
+  if (el) el.href = homeURL;
+})();
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc,
+  collection, query, where, orderBy, getDocs, serverTimestamp, limit
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDozcA-cfejrnyx5yF2lW1w1_cjlgZWv1Q",
+  authDomain: "sevenfx.firebaseapp.com",
+  projectId: "sevenfx",
+  storageBucket: "sevenfx.firebasestorage.app",
+  messagingSenderId: "665447101397",
+  appId: "1:665447101397:web:338eb69a6cf8a670ad035c",
+  measurementId: "G-W8CHSRG322"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ─── helpers ───────────────────────────────────────
+const COURSE_NAMES = {
+  beginner:'Beginner Trading Course',
+  intermediate:'Intermediate Trading Course',
+  advanced:'Advanced Trading Course',
+  propfirm:'Prop Firm Trading Program',
+  mentorship:'Mentorship'
+};
+
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function notify(msg, type='ok') {
+  const el = document.getElementById('adminNotif');
+  el.textContent = msg;
+  el.className = 'show notif-' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+async function auditLog(action, details='') {
+  try {
+    await addDoc(collection(db,'auditLogs'), {
+      action, details,
+      adminEmail: auth.currentUser?.email || 'unknown',
+      timestamp: serverTimestamp()
+    });
+  } catch(e) { console.warn('[Audit]', e.message); }
+}
+
+// ─── Admin guard ───────────────────────────────────
+let _currentAdmin = null;
+let _authResolved = false;
+
+// Set persistence first so the stored session is available immediately
+setPersistence(auth, browserLocalPersistence).catch(e => console.warn('Persistence:', e.message));
+
+// Give Firebase up to 6 seconds to restore the session before showing "not logged in"
+const authTimeout = setTimeout(() => {
+  if (!_authResolved) showDenied('You must be logged in to access this page.');
+}, 6000);
+
+onAuthStateChanged(auth, async user => {
+  clearTimeout(authTimeout);
+  _authResolved = true;
+
+  const screen = document.getElementById('accessScreen');
+  const msg    = document.getElementById('accessMsg');
+
+  if (!user) {
+    showDenied('You must be logged in to access this page.');
+    return;
+  }
+
+  msg.textContent = 'Checking admin privileges…';
+  let isAdmin = false;
+  try {
+    const snap = await getDoc(doc(db, 'admins', user.email.toLowerCase()));
+    isAdmin = snap.exists();
+  } catch(e) {
+    console.warn('Admin check error:', e.message);
+  }
+  if (!isAdmin) {
+    showDenied('Access Denied. You do not have admin privileges.');
+    return;
+  }
+  _currentAdmin = user;
+  // Populate UI
+  const name = user.displayName || user.email.split('@')[0];
+  document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('sidebarEmail').textContent = user.email;
+  document.getElementById('dashAdminName').textContent = name;
+  screen.classList.add('hide');
+  setTimeout(() => { screen.style.display='none'; }, 450);
+  document.getElementById('adminApp').classList.add('show');
+  await loadDashboard();
+});
+
+// Detect the base URL of the main site dynamically.
+// If admin.html is served from the same origin as index.html, use that.
+// Otherwise fall back to the known production URL.
+function getHomeURL() {
+  const here = window.location.href;
+  // If hosted alongside index.html (same folder), just go to root path
+  if (here.includes('admin.html')) {
+    return here.replace(/admin\.html.*$/, 'index.html');
+  }
+  return 'https://sevenfx.firebaseapp.com';
+}
+
+function showDenied(msg) {
+  const screen = document.getElementById('accessScreen');
+  const homeURL = getHomeURL();
+  const isAccessDenied = msg.startsWith('Access');
+  screen.style.display = 'flex';
+  screen.classList.remove('hide');
+  screen.innerHTML = `
+    <div class="access-denied-box">
+      <h2>🚫 ${isAccessDenied ? 'Access Denied' : 'Not Logged In'}</h2>
+      <p>${msg}</p>
+      <a href="${homeURL}">← Return to Website</a>
+    </div>`;
+}
+
+window.doLogout = async function() {
+  await signOut(auth);
+  window.location.href = getHomeURL();
+};
+
+// ─── Navigation ────────────────────────────────────
+const SECTION_TITLES = {
+  dashboard:'Dashboard', users:'Users', payments:'Payments',
+  access:'Course Access', courses:'Courses', announcements:'Announcements',
+  community:'Community', settings:'Settings', auditlogs:'Audit Logs'
+};
+
+window.showSection = function(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('topbarTitle').textContent = SECTION_TITLES[id] || id;
+  // Auto-load
+  const loaders = {
+    users: loadUsers, payments: loadPayments, access: loadAccess,
+    courses: loadCourses, announcements: loadAnnouncements,
+    community: loadCommunity, settings: loadSettings, auditlogs: loadAuditLogs
+  };
+  if (loaders[id]) loaders[id]();
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('mobile-open');
+};
+
+window.toggleSidebar = function() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+};
+
+// ─── Clock ─────────────────────────────────────────
+function updateClock() {
+  document.getElementById('topbarClock').textContent = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+window.loadDashboard = async function() {
+  // Stats
+  try {
+    const [usersSnap, paymentsSnap, accessSnap] = await Promise.all([
+      getDocs(collection(db,'users')),
+      getDocs(collection(db,'payments')),
+      getDocs(query(collection(db,'courseAccess'), where('access','==',true)))
+    ]);
+    let pending=0;
+    paymentsSnap.forEach(d => { if(d.data().status==='pending') pending++; });
+    document.getElementById('ds-users').textContent    = usersSnap.size;
+    document.getElementById('ds-payments').textContent = paymentsSnap.size;
+    document.getElementById('ds-pending').textContent  = pending;
+    document.getElementById('ds-approved').textContent = accessSnap.size;
+  } catch(e) { console.warn('Dashboard stats:', e.message); }
+
+  // Recent payments
+  const tbody = document.getElementById('dashRecentPayments');
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'payments'), orderBy('submittedAt','desc'), limit(8))); }
+    catch(e) { snap = await getDocs(collection(db,'payments')); }
+    const rows = [];
+    snap.forEach(d => {
+      const data = d.data();
+      const date = fmtDate(data.submittedAt);
+      const statusClass = data.status==='approved'?'approved':data.status==='rejected'?'rejected':'pending';
+      const approveBtn = data.status!=='approved'
+        ? `<button class="action-btn btn-approve" onclick="approvePayment('${d.id}','${data.uid||''}','${data.courseId||''}','${(data.email||'').replace(/'/g,"\'")}')">✓ Approve</button>` : '';
+      const rejectBtn = data.status!=='rejected'
+        ? `<button class="action-btn btn-reject" onclick="rejectPayment('${d.id}','${data.uid||''}','${data.courseId||''}','${(data.email||'').replace(/'/g,"\'")}')">✕ Reject</button>` : '';
+      rows.push(`<tr>
+        <td style="white-space:nowrap;">${date}</td>
+        <td style="font-size:.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.email||'—'}</td>
+        <td style="white-space:nowrap;">${COURSE_NAMES[data.courseId]||data.courseId||'—'}</td>
+        <td>${data.paymentMethod||'—'}</td>
+        <td><span class="badge badge-${statusClass}">${data.status||'pending'}</span></td>
+        <td>${approveBtn}${rejectBtn}</td>
+      </tr>`);
+    });
+    tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="6" class="empty-row">No payments yet.</td></tr>';
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row" style="color:var(--red);">Error: ${e.message}</td></tr>`;
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════════════
+let _allUsers = [];
+
+window.loadUsers = async function() {
+  const tbody = document.getElementById('usersBody');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-row">Loading…</td></tr>';
+  try {
+    const snap = await getDocs(collection(db,'users'));
+    _allUsers = [];
+    snap.forEach(d => _allUsers.push({ id: d.id, ...d.data() }));
+    _allUsers.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    renderUsers(_allUsers);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row" style="color:var(--red);">Error: ${e.message}</td></tr>`;
+  }
+};
+
+function renderUsers(list) {
+  const tbody = document.getElementById('usersBody');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-row">No users found.</td></tr>'; return; }
+  tbody.innerHTML = list.map(u => {
+    const status = u.suspended ? 'suspended' : 'active';
+    const safeEmail = (u.email||'').replace(/'/g,"\'");
+    const safeId = u.id;
+    return `<tr>
+      <td style="white-space:nowrap;font-size:.75rem;">${fmtDate(u.createdAt)}</td>
+      <td style="font-weight:600;">${u.name||u.displayName||'—'}</td>
+      <td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.email||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:.77rem;">${u.phone||'—'}</td>
+      <td><span class="badge badge-${u.role||'user'}">${u.role||'user'}</span></td>
+      <td><span class="badge badge-${status}">${status}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="action-btn btn-view" onclick="viewUser('${safeId}')">👁 View</button>
+        ${u.suspended
+          ? `<button class="action-btn btn-activate" onclick="activateUser('${safeId}')">✓ Activate</button>`
+          : `<button class="action-btn btn-suspend" onclick="suspendUser('${safeId}','${safeEmail}')">⊘ Suspend</button>`
+        }
+        <button class="action-btn btn-grant" onclick="quickGrant('${safeEmail}','${safeId}')">🔑 Access</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.filterUsers = function(val) {
+  const q = val.toLowerCase();
+  renderUsers(_allUsers.filter(u => (u.email||'').toLowerCase().includes(q) || (u.name||'').toLowerCase().includes(q)));
+};
+window.filterUsersByRole = function(role) {
+  renderUsers(role ? _allUsers.filter(u => (u.role||'user')===role) : _allUsers);
+};
+window.filterUsersByStatus = function(status) {
+  if (!status) { renderUsers(_allUsers); return; }
+  renderUsers(_allUsers.filter(u => status==='suspended' ? u.suspended : !u.suspended));
+};
+
+window.suspendUser = async function(uid, email) {
+  if (!confirm(`Suspend user: ${email}?`)) return;
+  try {
+    await updateDoc(doc(db,'users',uid), { suspended: true });
+    await auditLog('Suspend User', email);
+    notify(`User ${email} suspended.`, 'ok');
+    loadUsers();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.activateUser = async function(uid) {
+  try {
+    await updateDoc(doc(db,'users',uid), { suspended: false });
+    await auditLog('Activate User', uid);
+    notify('User activated.', 'ok');
+    loadUsers();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.viewUser = async function(uid) {
+  const u = _allUsers.find(x => x.id === uid);
+  if (!u) return;
+  // Fetch their course access
+  let courses = [];
+  try {
+    const aSnap = await getDocs(query(collection(db,'courseAccess'), where('uid','==',uid)));
+    aSnap.forEach(d => { const data=d.data(); if(data.access) courses.push(COURSE_NAMES[data.courseId]||data.courseId); });
+  } catch(e){}
+  document.getElementById('userModalTitle').textContent = u.name || u.email || 'User Profile';
+  document.getElementById('userModalBody').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;">
+      ${[
+        ['UID', `<span style="font-family:var(--font-mono);font-size:.74rem;">${u.id}</span>`],
+        ['Name', u.name||'—'],
+        ['Email', u.email||'—'],
+        ['Phone', u.phone||'—'],
+        ['Role', `<span class="badge badge-${u.role||'user'}">${u.role||'user'}</span>`],
+        ['Status', u.suspended ? '<span class="badge badge-suspended">Suspended</span>' : '<span class="badge badge-active">Active</span>'],
+        ['Joined', fmtDate(u.createdAt)],
+        ['Courses', courses.length ? courses.join(', ') : 'None granted'],
+      ].map(([k,v]) => `<tr><td style="color:var(--text3);padding:7px 0;width:120px;font-size:.77rem;text-transform:uppercase;letter-spacing:.04em;">${k}</td><td style="padding:7px 0;">${v}</td></tr>`).join('')}
+    </table>`;
+  document.getElementById('userModal').classList.add('open');
+};
+
+window.closeUserModal = () => document.getElementById('userModal').classList.remove('open');
+
+window.quickGrant = function(email, uid) {
+  document.getElementById('grantEmail').value = email;
+  document.getElementById('grantUID').value = uid;
+  openGrantModal();
+};
+
+// ═══════════════════════════════════════════════════
+// PAYMENTS
+// ═══════════════════════════════════════════════════
+window.loadPayments = async function() {
+  const tbody = document.getElementById('paymentsBody');
+  tbody.innerHTML = '<tr><td colspan="8" class="empty-row">Loading…</td></tr>';
+  const statusFilter = document.getElementById('payStatusFilter')?.value || '';
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'payments'), orderBy('submittedAt','desc'))); }
+    catch(e) { snap = await getDocs(collection(db,'payments')); }
+    const rows = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (statusFilter && data.status !== statusFilter) return;
+      const sc = data.status==='approved'?'approved':data.status==='rejected'?'rejected':'pending';
+      const safeEmail = (data.email||'').replace(/'/g,"\'");
+      const approveBtn = data.status!=='approved'
+        ? `<button class="action-btn btn-approve" onclick="approvePayment('${d.id}','${data.uid||''}','${data.courseId||''}','${safeEmail}')">✓ Approve</button>` : '';
+      const rejectBtn = data.status!=='rejected'
+        ? `<button class="action-btn btn-reject" onclick="rejectPayment('${d.id}','${data.uid||''}','${data.courseId||''}','${safeEmail}')">✕ Reject</button>` : '';
+      rows.push(`<tr>
+        <td style="white-space:nowrap;font-size:.75rem;">${fmtDate(data.submittedAt)}</td>
+        <td style="font-size:.77rem;">${data.name||'—'}</td>
+        <td style="font-size:.77rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.email||'—'}</td>
+        <td style="white-space:nowrap;">${COURSE_NAMES[data.courseId]||data.courseId||'—'}</td>
+        <td>${data.paymentMethod||'—'}</td>
+        <td style="font-family:var(--font-mono);font-size:.72rem;">${data.txRef||'—'}</td>
+        <td><span class="badge badge-${sc}">${data.status||'pending'}</span></td>
+        <td style="white-space:nowrap;">
+          ${approveBtn}${rejectBtn}
+          <button class="action-btn btn-view" onclick="viewPayment('${d.id}')">👁</button>
+        </td>
+      </tr>`);
+    });
+    tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="8" class="empty-row">No payments found.</td></tr>';
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-row" style="color:var(--red);">Error: ${e.message}</td></tr>`;
+  }
+};
+
+window.approvePayment = async function(payId, uid, courseId, email) {
+  if (!confirm(`Approve payment and grant access to ${COURSE_NAMES[courseId]||courseId} for ${email}?`)) return;
+  try {
+    await updateDoc(doc(db,'payments',payId), { status:'approved', reviewedAt: serverTimestamp(), reviewedBy: auth.currentUser?.email });
+    if (uid && courseId) {
+      await setDoc(doc(db,'courseAccess', uid+'_'+courseId), {
+        uid, email, courseId, access: true,
+        approvedAt: serverTimestamp(), approvedBy: auth.currentUser?.email
+      });
+    }
+    await auditLog('Approved Payment', `payId:${payId}, courseId:${courseId}, user:${email}`);
+    notify(`✅ Payment approved. Access granted.`, 'ok');
+    loadPayments(); loadDashboard();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.rejectPayment = async function(payId, uid, courseId, email) {
+  if (!confirm(`Reject this payment from ${email}?`)) return;
+  try {
+    await updateDoc(doc(db,'payments',payId), { status:'rejected', reviewedAt: serverTimestamp(), reviewedBy: auth.currentUser?.email });
+    if (uid && courseId) {
+      await setDoc(doc(db,'courseAccess', uid+'_'+courseId), { uid, email, courseId, access: false, rejectedAt: serverTimestamp() }, { merge:true });
+    }
+    await auditLog('Rejected Payment', `payId:${payId}, user:${email}`);
+    notify(`Payment rejected.`, 'err');
+    loadPayments(); loadDashboard();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.viewPayment = async function(payId) {
+  try {
+    const snap = await getDoc(doc(db,'payments',payId));
+    if (!snap.exists()) return;
+    const d = snap.data();
+    document.getElementById('payModalBody').innerHTML = `
+      <table style="width:100%;border-collapse:collapse;">
+        ${[
+          ['Payment ID', `<span style="font-family:var(--font-mono);font-size:.74rem;">${payId}</span>`],
+          ['User Email', d.email||'—'],
+          ['Name', d.name||'—'],
+          ['Course', COURSE_NAMES[d.courseId]||d.courseId||'—'],
+          ['Method', d.paymentMethod||'—'],
+          ['Reference', d.txRef||d.reference||'—'],
+          ['Amount', d.amount||'—'],
+          ['Submitted', fmtDate(d.submittedAt)],
+          ['Status', `<span class="badge badge-${d.status||'pending'}">${d.status||'pending'}</span>`],
+          ['Reviewed By', d.reviewedBy||'—'],
+        ].map(([k,v]) => `<tr><td style="color:var(--text3);padding:7px 0;width:120px;font-size:.77rem;text-transform:uppercase;letter-spacing:.04em;">${k}</td><td style="padding:7px 0;">${v}</td></tr>`).join('')}
+      </table>`;
+    document.getElementById('payModal').classList.add('open');
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+window.closePayModal = () => document.getElementById('payModal').classList.remove('open');
+
+// ═══════════════════════════════════════════════════
+// COURSE ACCESS
+// ═══════════════════════════════════════════════════
+window.loadAccess = async function() {
+  const tbody = document.getElementById('accessBody');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-row">Loading…</td></tr>';
+  const courseFilter  = document.getElementById('accessCourseFilter')?.value || '';
+  const statusFilter  = document.getElementById('accessStatusFilter')?.value;
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'courseAccess'), orderBy('approvedAt','desc'))); }
+    catch(e) { snap = await getDocs(collection(db,'courseAccess')); }
+    const rows = [];
+    snap.forEach(d => {
+      const data = d.data();
+      if (courseFilter && data.courseId !== courseFilter) return;
+      if (statusFilter !== undefined && statusFilter !== '' && String(data.access) !== statusFilter) return;
+      const sc = data.access ? 'approved' : 'rejected';
+      const label = data.access ? 'Granted' : 'Revoked';
+      rows.push(`<tr>
+        <td style="white-space:nowrap;font-size:.75rem;">${fmtDate(data.approvedAt)}</td>
+        <td style="font-size:.78rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.email||'—'}</td>
+        <td>${COURSE_NAMES[data.courseId]||data.courseId||'—'}</td>
+        <td><span class="badge badge-${sc}">${label}</span></td>
+        <td style="font-size:.75rem;">${data.approvedBy||'—'}</td>
+        <td style="white-space:nowrap;">
+          ${data.access
+            ? `<button class="action-btn btn-revoke" onclick="revokeAccess('${d.id}','${(data.email||'').replace(/'/g,"\\'")}')">⊘ Revoke</button>`
+            : `<button class="action-btn btn-grant" onclick="restoreAccess('${d.id}','${(data.email||'').replace(/'/g,"\\'")}')">✓ Grant</button>`
+          }
+        </td>
+      </tr>`);
+    });
+    tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="6" class="empty-row">No records found.</td></tr>';
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row" style="color:var(--red);">Error: ${e.message}</td></tr>`;
+  }
+};
+
+window.revokeAccess = async function(docId, email) {
+  if (!confirm(`Revoke access for ${email}?`)) return;
+  try {
+    await updateDoc(doc(db,'courseAccess',docId), { access: false, revokedAt: serverTimestamp(), revokedBy: auth.currentUser?.email });
+    await auditLog('Revoked Course Access', `docId:${docId}, user:${email}`);
+    notify('Access revoked.', 'err');
+    loadAccess();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.restoreAccess = async function(docId, email) {
+  try {
+    await updateDoc(doc(db,'courseAccess',docId), { access: true, approvedAt: serverTimestamp(), approvedBy: auth.currentUser?.email });
+    await auditLog('Restored Course Access', `docId:${docId}, user:${email}`);
+    notify('✅ Access restored.', 'ok');
+    loadAccess();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.openGrantModal  = function() { document.getElementById('grantModal').classList.add('open'); };
+window.closeGrantModal = function() { document.getElementById('grantModal').classList.remove('open'); };
+
+window.manualGrantAccess = async function() {
+  const email    = document.getElementById('grantEmail').value.trim();
+  const uid      = document.getElementById('grantUID').value.trim();
+  const courseId = document.getElementById('grantCourse').value;
+  if (!email || !uid) { notify('Email and UID are required.', 'err'); return; }
+  try {
+    await setDoc(doc(db,'courseAccess', uid+'_'+courseId), {
+      uid, email, courseId, access: true,
+      approvedAt: serverTimestamp(), approvedBy: auth.currentUser?.email
+    });
+    await auditLog('Manual Grant Access', `courseId:${courseId}, user:${email}`);
+    notify(`✅ Access granted for ${COURSE_NAMES[courseId]}.`, 'ok');
+    closeGrantModal();
+    loadAccess(); loadDashboard();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+// ═══════════════════════════════════════════════════
+// COURSES
+// ═══════════════════════════════════════════════════
+const DEFAULT_COURSES = [
+  { id:'beginner',     name:'Beginner Trading Course',        desc:'Foundations of trading — market structure, sessions, risk basics.' },
+  { id:'intermediate', name:'Intermediate Trading Course',     desc:'Volume Profile, VWAP, and LVN Rejection model.' },
+  { id:'advanced',     name:'Advanced Trading Course',         desc:'Execution models — Rotation, Acceptance, Runner protocol.' },
+  { id:'propfirm',     name:'Prop Firm Trading Program',       desc:'Passing funded challenges with the SevenFX framework.' },
+  { id:'mentorship',   name:'Mentorship',                      desc:'1-on-1 coaching with live session review.' },
+];
+
+window.loadCourses = async function() {
+  const grid = document.getElementById('courseGrid');
+  grid.innerHTML = '';
+  for (const course of DEFAULT_COURSES) {
+    let enabled = true, locked = false;
+    try {
+      const snap = await getDoc(doc(db,'courses', course.id));
+      if (snap.exists()) { enabled = snap.data().enabled !== false; locked = !!snap.data().locked; }
+    } catch(e){}
+    const statusBadge = locked
+      ? '<span class="badge badge-locked">🔒 Locked</span>'
+      : enabled
+        ? '<span class="badge badge-active">✅ Active</span>'
+        : '<span class="badge badge-inactive">⊘ Disabled</span>';
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="course-card-admin">
+        <div style="margin-bottom:8px;">${statusBadge}</div>
+        <div class="cc-name">${course.name}</div>
+        <div class="cc-sub">${course.desc}</div>
+        <div class="cc-actions">
+          <button class="action-btn btn-activate" onclick="setCourse('${course.id}',{enabled:true,locked:false})">✓ Enable</button>
+          <button class="action-btn btn-suspend" onclick="setCourse('${course.id}',{enabled:false})">⊘ Disable</button>
+          ${locked
+            ? `<button class="action-btn btn-grant" onclick="setCourse('${course.id}',{locked:false})">🔓 Unlock</button>`
+            : `<button class="action-btn btn-revoke" onclick="setCourse('${course.id}',{locked:true,enabled:false})">🔒 Lock</button>`
+          }
+        </div>
+      </div>`);
+  }
+};
+
+window.setCourse = async function(courseId, updates) {
+  try {
+    await setDoc(doc(db,'courses',courseId), { ...updates, updatedAt: serverTimestamp(), updatedBy: auth.currentUser?.email }, { merge:true });
+    await auditLog('Course Config Update', `courseId:${courseId}, updates:${JSON.stringify(updates)}`);
+    notify(`Course ${courseId} updated.`, 'ok');
+    loadCourses();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+// ═══════════════════════════════════════════════════
+// ANNOUNCEMENTS
+// ═══════════════════════════════════════════════════
+window.postAnnouncement = async function() {
+  const title = document.getElementById('annTitle').value.trim();
+  const body  = document.getElementById('annBody').value.trim();
+  const type  = document.getElementById('annType').value;
+  if (!title || !body) { notify('Title and message are required.', 'err'); return; }
+  try {
+    await addDoc(collection(db,'announcements'), {
+      title, body, type,
+      postedAt: serverTimestamp(),
+      postedBy: auth.currentUser?.email,
+      active: true
+    });
+    await auditLog('Posted Announcement', title);
+    notify('✅ Announcement published.', 'ok');
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annBody').value = '';
+    loadAnnouncements();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+window.loadAnnouncements = async function() {
+  const list = document.getElementById('announcementsList');
+  list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">Loading…</div>';
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'announcements'), orderBy('postedAt','desc'))); }
+    catch(e) { snap = await getDocs(collection(db,'announcements')); }
+    const items = [];
+    snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+    if (!items.length) { list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;">No announcements yet.</div>'; return; }
+    const TYPE_ICONS = { general:'📌', course:'📚', webinar:'🎥', holiday:'🏖️', community:'👥' };
+    list.innerHTML = items.map(a => `
+      <div class="audit-item">
+        <div class="audit-icon">${TYPE_ICONS[a.type]||'📌'}</div>
+        <div class="audit-info">
+          <div class="audit-action">${a.title}</div>
+          <div class="audit-meta">${a.body}</div>
+          <div class="audit-meta" style="margin-top:4px;">By ${a.postedBy||'admin'} · ${fmtDate(a.postedAt)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <span class="badge badge-${a.active!==false?'active':'inactive'}">${a.active!==false?'Live':'Hidden'}</span>
+          <button class="action-btn btn-reject" onclick="deleteAnn('${a.id}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = `<div style="text-align:center;color:var(--red);padding:20px;">Error: ${e.message}</div>`;
+  }
+};
+
+window.deleteAnn = async function(id) {
+  if (!confirm('Delete this announcement?')) return;
+  try {
+    await deleteDoc(doc(db,'announcements',id));
+    await auditLog('Deleted Announcement', id);
+    notify('Announcement deleted.', 'ok');
+    loadAnnouncements();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+// ═══════════════════════════════════════════════════
+// COMMUNITY
+// ═══════════════════════════════════════════════════
+const DEFAULT_COMMUNITY = [
+  { id:'telegram',  icon:'📱', name:'Telegram',  url:'https://t.me/Seven7FxAcademy' },
+  { id:'instagram', icon:'📸', name:'Instagram', url:'https://www.instagram.com/seven77fx' },
+  { id:'tiktok',    icon:'🎵', name:'TikTok',    url:'https://www.tiktok.com/@vptrader7' },
+  { id:'youtube',   icon:'▶',  name:'YouTube',   url:'https://www.youtube.com/@Seven77FX' },
+];
+
+window.loadCommunity = async function() {
+  const grid = document.getElementById('communityGrid');
+  grid.innerHTML = '';
+  for (const c of DEFAULT_COMMUNITY) {
+    let url = c.url;
+    try {
+      const snap = await getDoc(doc(db,'community',c.id));
+      if (snap.exists() && snap.data().url) url = snap.data().url;
+    } catch(e){}
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="community-card">
+        <div class="comm-icon">${c.icon}</div>
+        <div class="comm-name">${c.name}</div>
+        <div class="comm-url">${url}</div>
+        <div class="form-field" style="margin-bottom:10px;">
+          <input class="form-input" id="comm-${c.id}" type="url" value="${url}" placeholder="${url}">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="action-btn btn-grant" onclick="saveCommLink('${c.id}')">💾 Save</button>
+          <a href="${url}" target="_blank" class="action-btn btn-view" style="display:inline-block;">↗ Visit</a>
+        </div>
+      </div>`);
+  }
+};
+
+window.saveCommLink = async function(id) {
+  const url = document.getElementById('comm-'+id)?.value.trim();
+  if (!url) return;
+  try {
+    await setDoc(doc(db,'community',id), { url, updatedAt: serverTimestamp(), updatedBy: auth.currentUser?.email }, { merge:true });
+    await auditLog('Updated Community Link', `${id}: ${url}`);
+    notify(`✅ ${id} link saved.`, 'ok');
+    loadCommunity();
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+// ═══════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════
+window.loadSettings = async function() {
+  try {
+    const snap = await getDoc(doc(db,'settings','global'));
+    if (!snap.exists()) return;
+    const d = snap.data();
+    const fields = ['siteName','contactEmail','telegram','cbe','telebirr','other'];
+    fields.forEach(f => { const el=document.getElementById('cfg-'+f); if(el && d[f]) el.value=d[f]; });
+    const prices = ['beginner','intermediate','advanced','propfirm','mentorship'];
+    prices.forEach(p => { const el=document.getElementById('cfg-price-'+p); if(el && d['price_'+p]) el.value=d['price_'+p]; });
+  } catch(e) { console.warn('Load settings:', e.message); }
+};
+
+window.saveSettings = async function() {
+  try {
+    const data = {};
+    ['siteName','contactEmail','telegram','cbe','telebirr','other'].forEach(f => {
+      const el = document.getElementById('cfg-'+f); if(el) data[f] = el.value;
+    });
+    ['beginner','intermediate','advanced','propfirm','mentorship'].forEach(p => {
+      const el = document.getElementById('cfg-price-'+p); if(el) data['price_'+p] = el.value;
+    });
+    data.updatedAt = serverTimestamp();
+    data.updatedBy = auth.currentUser?.email;
+    await setDoc(doc(db,'settings','global'), data, { merge:true });
+    await auditLog('Updated Settings', 'Global config saved');
+    notify('✅ Settings saved.', 'ok');
+  } catch(e) { notify('Error: ' + e.message, 'err'); }
+};
+
+// ═══════════════════════════════════════════════════
+// AUDIT LOGS
+// ═══════════════════════════════════════════════════
+window.loadAuditLogs = async function() {
+  const container = document.getElementById('auditTimeline');
+  container.innerHTML = '<div class="empty-row" style="text-align:center;color:var(--text3);padding:24px;">Loading…</div>';
+  try {
+    let snap;
+    try { snap = await getDocs(query(collection(db,'auditLogs'), orderBy('timestamp','desc'), limit(60))); }
+    catch(e) { snap = await getDocs(collection(db,'auditLogs')); }
+    const items = [];
+    snap.forEach(d => items.push({ id:d.id, ...d.data() }));
+    if (!items.length) { container.innerHTML = '<div class="empty-row" style="text-align:center;color:var(--text3);padding:24px;">No audit records yet.</div>'; return; }
+    const ACTION_ICONS = {
+      'Approved Payment':'✅', 'Rejected Payment':'✕', 'Revoked Course Access':'🔒',
+      'Restored Course Access':'🔓', 'Manual Grant Access':'🔑', 'Suspend User':'⊘',
+      'Activate User':'✓', 'Posted Announcement':'📢', 'Deleted Announcement':'🗑',
+      'Course Config Update':'📚', 'Updated Settings':'⚙️', 'Updated Community Link':'🌐'
+    };
+    container.innerHTML = items.map(a => `
+      <div class="audit-item">
+        <div class="audit-icon">${ACTION_ICONS[a.action]||'📋'}</div>
+        <div class="audit-info">
+          <div class="audit-action">${a.action||'Unknown action'}</div>
+          <div class="audit-meta">${a.details||''}</div>
+          <div class="audit-meta" style="margin-top:3px;">By <strong>${a.adminEmail||'admin'}</strong></div>
+        </div>
+        <div class="audit-time">${fmtDate(a.timestamp)}</div>
+      </div>`).join('');
+  } catch(e) {
+    container.innerHTML = `<div class="empty-row" style="text-align:center;color:var(--red);padding:24px;">Error: ${e.message}</div>`;
+  }
+};
+
+</script>
+</body>
+</html>
