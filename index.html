@@ -2687,6 +2687,31 @@ body::before {
   font-weight:600; font-size:.88rem; cursor:pointer; transition:all .2s;
 }
 .profile-logout-btn:hover { background:rgba(248,113,113,.18); }
+
+/* ── Google Sign-In Button ── */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  background: #fff;
+  border: 1.5px solid #dadce0;
+  border-radius: var(--radius);
+  color: #3c4043;
+  font-family: var(--font-body);
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  margin-bottom: 4px;
+}
+.google-btn:hover {
+  background: #f8f9fa;
+  border-color: #bdc1c6;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
 </style>
 </head>
 <body>
@@ -3750,6 +3775,11 @@ body::before {
         <div id="authErrSignup" style="display:none;color:var(--red);font-size:.8rem;margin-bottom:10px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);"></div>
         <button class="auth-btn-full" id="signupBtn" onclick="firebaseSignup()">Create Account →</button>
         <div class="auth-divider">or</div>
+        <button onclick="firebaseGoogleSignIn()" class="google-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-divider">or</div>
         <p style="font-size:.8rem;color:var(--text3);text-align:center;">Already have an account? <button onclick="switchTab('signin')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:.8rem;">Sign In</button></p>
       </div>
       <div id="signinForm" style="display:none;">
@@ -3757,6 +3787,11 @@ body::before {
         <div class="auth-field"><label>Password</label><input type="password" id="siPass" placeholder="Your password"></div>
         <div id="authErrSignin" style="display:none;color:var(--red);font-size:.8rem;margin-bottom:10px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);"></div>
         <button class="auth-btn-full" id="signinBtn" onclick="firebaseSignin()">Sign In →</button>
+        <div class="auth-divider">or</div>
+        <button onclick="firebaseGoogleSignIn()" class="google-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
         <div class="auth-divider">or</div>
         <p style="font-size:.8rem;color:var(--text3);text-align:center;">New to SevenFX? <button onclick="switchTab('signup')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:.8rem;">Create Account</button></p>
       </div>
@@ -3804,10 +3839,10 @@ body::before {
       <button class="auth-btn-full" onclick="authNext(2)" id="payNextBtn" disabled style="opacity:.5;cursor:not-allowed;">Continue →</button>
     </div>
 
-    <!-- STEP 3: Payment Details + Receipt Upload -->
+    <!-- STEP 3: Payment Details + Telegram Confirmation (no upload) -->
     <div class="auth-step" id="authStep3">
       <div class="auth-step-logo">SEVEN<span>FX</span></div>
-      <div class="auth-step-tag">// Upload Receipt</div>
+      <div class="auth-step-tag">// Send Payment</div>
       <div class="auth-progress">
         <div class="ap-step done">✓</div>
         <div class="ap-line done"></div>
@@ -3815,44 +3850,45 @@ body::before {
         <div class="ap-line done"></div>
         <div class="ap-step active">3</div>
       </div>
-      <div class="pay-detail-box" id="payAccountDetails">
-        <!-- populated by JS -->
+      <!-- Payment account details (populated by JS) -->
+      <div class="pay-detail-box" id="payAccountDetails"></div>
+
+      <!-- Telegram instruction box -->
+      <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius);padding:16px 18px;margin:16px 0;">
+        <div style="font-family:var(--font-mono);font-size:.68rem;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">📱 After Payment</div>
+        <p style="font-size:.84rem;color:var(--text2);line-height:1.65;margin:0;">
+          Send your payment receipt to Telegram:<br>
+          <a href="https://t.me/ftadesse" target="_blank" style="color:#34d399;font-weight:700;font-size:.95rem;text-decoration:none;">@ftadesse</a>
+        </p>
+        <p style="font-size:.78rem;color:var(--text3);margin-top:8px;margin-bottom:0;">Your course will be activated after verification by our team.</p>
       </div>
-      <p style="font-size:.83rem;color:var(--text2);margin-bottom:12px;">After completing payment, upload your receipt below:</p>
-      <div class="upload-preview" id="uploadPreview">
-        <span>📎</span>
-        <span id="uploadFileName">receipt.jpg</span>
-        <span style="margin-left:auto;color:var(--green);font-size:.8rem;">✓ Ready</span>
-      </div>
-      <div class="upload-zone" id="uploadZone">
-        <input type="file" accept="image/*,.pdf" onchange="handleUpload(event)">
-        <div class="upload-icon">📤</div>
-        <div class="upload-label">Click to upload or drag your receipt here</div>
-        <div class="upload-sub">PNG, JPG, PDF — max 5MB</div>
-      </div>
-      <div class="auth-field" style="margin-bottom:14px;">
-        <label>Transaction Reference (optional)</label>
-        <input type="text" id="txRef" placeholder="e.g. TXN-12345678">
-      </div>
-      <div style="display:flex;gap:10px;margin-top:6px;">
-        <button class="auth-btn-full" onclick="submitReceipt()" id="submitReceiptBtn" style="flex:2;">Save &amp; Submit →</button>
-        <button onclick="closeAuth()" style="flex:1;padding:13px;background:var(--surface);border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);font-family:var(--font-body);font-size:.92rem;font-weight:500;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">Cancel</button>
-      </div>
+
+      <div id="payErrMsg" style="display:none;color:var(--red);font-size:.8rem;margin-bottom:10px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);"></div>
+
+      <button class="auth-btn-full" onclick="submitConfirm()" id="submitReceiptBtn" style="margin-bottom:10px;">
+        ✅ I Have Sent My Receipt
+      </button>
+      <button onclick="closeAuth()" style="width:100%;padding:12px;background:var(--surface);border:1px solid var(--border2);color:var(--text2);border-radius:var(--radius);font-family:var(--font-body);font-size:.88rem;font-weight:500;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">Cancel</button>
     </div>
 
-    <!-- STEP 4: Success -->
+    <!-- STEP 4: Submission Confirmed -->
     <div class="auth-step" id="authStep4">
       <div style="text-align:center;padding:10px 0;">
         <div class="auth-success-icon">✓</div>
-        <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;margin-bottom:10px;">Receipt Submitted!</h2>
-        <p style="color:var(--text2);font-size:.9rem;line-height:1.7;margin-bottom:24px;">Your payment receipt has been sent for review. Once approved by our team, your course will unlock automatically.<br><br>You will receive a confirmation at your email address.</p>
-        <div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:var(--radius);padding:16px;margin-bottom:22px;text-align:left;">
-          <div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Review Timeline</div>
-          <div style="font-size:.88rem;color:var(--text2);">⏱ Typically reviewed within <strong style="color:var(--text);">24–48 hours</strong></div>
-          <div style="font-size:.88rem;color:var(--text2);margin-top:5px;">📧 Confirmation sent to your registered email</div>
+        <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;margin-bottom:10px;">Payment Submitted!</h2>
+        <p style="color:var(--text2);font-size:.9rem;line-height:1.7;margin-bottom:20px;">
+          Your payment confirmation has been recorded. Once our team verifies your receipt on Telegram, your course will be activated automatically.
+        </p>
+        <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:var(--radius);padding:16px;margin-bottom:18px;text-align:left;">
+          <div style="font-family:var(--font-mono);font-size:.7rem;color:#34d399;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Next Step</div>
+          <div style="font-size:.86rem;color:var(--text2);margin-bottom:6px;">📱 Send your receipt to Telegram: <strong style="color:var(--text);">@ftadesse</strong></div>
+          <div style="font-size:.86rem;color:var(--text2);margin-bottom:6px;">⏱ Verified within <strong style="color:var(--text);">24–48 hours</strong></div>
+          <div style="font-size:.86rem;color:var(--text2);">🔓 Course unlocks automatically once approved</div>
         </div>
-        <button class="auth-btn-full" onclick="closeAuth()">Close</button>
-        <p style="font-size:.8rem;color:var(--text3);margin-top:12px;">Questions? <a href="mailto:seven777fx@gmail.com" style="color:var(--accent);">Contact us</a></p>
+        <a href="https://t.me/ftadesse" target="_blank" class="auth-btn-full" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px;background:linear-gradient(135deg,#25D366,#128C7E);">
+          📱 Open Telegram @ftadesse
+        </a>
+        <button class="auth-btn-full" onclick="closeAuth()" style="background:var(--surface);border:1px solid var(--border2);color:var(--text2);">Close</button>
       </div>
     </div>
   </div>
@@ -4067,43 +4103,24 @@ function buildPaymentDetails(method) {
   }).join('') + `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text3);font-family:var(--font-mono);">⚠ Send exact amount. Include your email as reference.</div>`;
 }
 
-let _receiptFile = null;
-function handleUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  _receiptFile = file;
-  const prev = document.getElementById('uploadPreview');
-  const nameEl = document.getElementById('uploadFileName');
-  const zone = document.getElementById('uploadZone');
-  if (nameEl) nameEl.textContent = file.name;
-  if (prev) prev.classList.add('show');
-  if (zone) zone.style.borderColor = 'var(--green)';
-}
-
-async function submitReceipt() {
+// submitConfirm — called by "I Have Sent My Receipt" button (no file upload)
+async function submitConfirm() {
   const btn = document.getElementById('submitReceiptBtn');
-  if (btn) { btn.textContent = 'Submitting…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  const errEl = document.getElementById('payErrMsg');
+  if (errEl) errEl.style.display = 'none';
 
-  // Call Firebase submission if user is logged in
   if (typeof window._fbSubmitPayment === 'function') {
-    const ok = await window._fbSubmitPayment(_receiptFile);
+    const ok = await window._fbSubmitPayment();
     if (!ok) {
-      if (btn) { btn.textContent = 'Save & Submit →'; btn.disabled = false; }
+      if (btn) { btn.textContent = '✅ I Have Sent My Receipt'; btn.disabled = false; }
+      if (errEl) { errEl.textContent = 'Failed to save. Check your connection and try again.'; errEl.style.display = 'block'; }
       return;
     }
   }
 
+  if (btn) { btn.textContent = '✅ I Have Sent My Receipt'; btn.disabled = false; }
   showAuthStep(4);
-  setTimeout(() => {
-    showSuccessModal(
-      'Receipt Submitted! 📧',
-      'Your payment receipt has been received. Our team will review it within 24–48 hours. You\'ll receive a confirmation email once approved.',
-      '✓',
-      'Done',
-      () => { closeSuccessModal(); closeAuth(); }
-    );
-    if (btn) { btn.textContent = 'Save & Submit →'; btn.disabled = false; }
-  }, 400);
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuth(); });
@@ -5031,7 +5048,7 @@ document.querySelectorAll('.course-card, .mentorship-card').forEach(el => observ
 ══════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Firebase Config ──────────────────────────────────────
@@ -5572,35 +5589,41 @@ function showAccessDeniedModal(title, bodyHtml, subtext, showEnroll, courseId, c
   document.body.style.overflow = 'hidden';
 }
 
-// Save payment record to Firestore payments collection
-window._fbSubmitPayment = async function(receiptFile) {
-  const user = auth.currentUser;
+// Save payment record to Firestore payments collection (no file upload)
+window._fbSubmitPayment = async function() {
+  const user = auth?.currentUser;
   if (!user) {
-    alert('You must be logged in to submit a payment.');
+    console.error('[SevenFX] _fbSubmitPayment: no user logged in');
+    return false;
+  }
+  if (!authState.courseId) {
+    console.error('[SevenFX] _fbSubmitPayment: no courseId in authState');
     return false;
   }
   try {
-    const txRef = document.getElementById('txRef')?.value?.trim() || '';
-    const info  = coursePricing[authState.courseId] || {};
-
-    await addDoc(collection(db, 'payments'), {
+    const info = coursePricing[authState.courseId] || {};
+    const payload = {
       uid:           user.uid,
       email:         user.email,
       courseId:      authState.courseId,
       courseName:    info.name || authState.courseId,
       coursePrice:   info.price || '—',
       paymentMethod: authState.paymentMethod || '—',
-      txRef:         txRef,
-      receiptName:   receiptFile ? receiptFile.name : 'none',
       status:        'pending',
       submittedAt:   serverTimestamp(),
-    });
+    };
+    await addDoc(collection(db, 'payments'), payload);
+    console.log('[SevenFX] ✓ Payment saved:', payload.courseId, '| method:', payload.paymentMethod);
 
-    console.log('[SevenFX] Payment saved to Firestore — status: pending');
+    // Refresh course UI so this course shows ⏳ PENDING immediately
+    if (auth.currentUser) {
+      const pendingCourses = await loadPendingCourses(auth.currentUser.uid);
+      const approvedCourses = await loadUserCourses(auth.currentUser.uid);
+      applyCourseUI(approvedCourses, pendingCourses);
+    }
     return true;
   } catch(e) {
     console.error('[SevenFX] Payment save error:', e.code, e.message);
-    alert('Failed to save payment: ' + e.message);
     return false;
   }
 };
@@ -6010,6 +6033,74 @@ window.adminSearchUsers = function(term) {
 document.addEventListener('keydown', e => {
   if (e.key==='Escape') { closeAdmin?.(); closeProfile?.(); }
 });
+
+// ── GOOGLE SIGN IN / SIGN UP ──────────────────────────────
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+window.firebaseGoogleSignIn = async function() {
+  if (!auth) { alert('Firebase not initialized.'); return; }
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user   = result.user;
+    const isNew  = result._tokenResponse?.isNewUser || false;
+
+    // Check admin
+    const isAdminResult = await checkAdmin(user.email);
+    const role = isAdminResult ? 'admin' : 'user';
+
+    // Always upsert user doc (setDoc with merge so existing data isn't lost)
+    await setDoc(doc(db, 'users', user.uid), {
+      uid:      user.uid,
+      username: user.displayName || user.email.split('@')[0],
+      email:    user.email,
+      role:     role,
+      ...(isNew ? { createdAt: serverTimestamp(), phone: '' } : {}),
+    }, { merge: true });
+
+    console.log('[SevenFX] ✓ Google sign-in:', user.email, '| new:', isNew);
+
+    currentUserRole = role;
+    updateNavAuth(user, role);
+
+    // Load course access
+    const [approvedCourses, pendingCourses] = await Promise.all([
+      loadUserCourses(user.uid),
+      loadPendingCourses(user.uid),
+    ]);
+    applyCourseUI(approvedCourses, pendingCourses);
+
+    // Close auth modal if open
+    closeAuth();
+
+    // If triggered from course button, open payment flow
+    if (authState.courseId && authState.courseId !== 'signup' && authState.courseId !== 'course') {
+      const accessDocId = user.uid + '_' + authState.courseId;
+      const snap = await getDoc(doc(db, 'courseAccess', accessDocId));
+      if (snap.exists() && snap.data().access === true) {
+        await showCourseContent(authState.courseId);
+      } else {
+        const info = coursePricing[authState.courseId] || {};
+        const el = document.getElementById('payCourseName');
+        const ep = document.getElementById('payCoursePrice');
+        if (el) el.textContent = info.name || authState.courseId;
+        if (ep) ep.textContent = info.price || '—';
+        document.getElementById('authOverlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
+        showAuthStep(2);
+      }
+    }
+
+  } catch(err) {
+    if (err.code === 'auth/popup-closed-by-user') return; // user cancelled
+    if (err.code === 'auth/popup-blocked') {
+      alert('Popup was blocked by your browser. Please allow popups for this site and try again.');
+      return;
+    }
+    console.error('[SevenFX] Google sign-in error:', err.code, err.message);
+    alert('Google sign-in failed: ' + friendlyError(err.code));
+  }
+};
 
 </script>
 
