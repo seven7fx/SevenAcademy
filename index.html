@@ -2594,10 +2594,10 @@ body::before {
     <div class="hub-grid">
 
       <!-- COURSE 01 -->
-      <div class="course-card fade-up">
+      <div class="course-card fade-up" id="courseCard-beginner">
         <div class="course-accent-bar c1"></div>
         <div class="course-head">
-          <div class="course-lock-badge">🔒 LOCKED</div>
+          <div class="course-lock-badge" id="lockBadge-beginner">🔒 LOCKED</div>
           <div class="course-num">COURSE 01</div>
           <div class="course-title">Beginner Trading Course</div>
           <div class="course-insight">Designed for complete beginners who want to build a strong foundation before risking capital. Covers how financial markets work, how traders think, and how to build proper habits from day one.</div>
@@ -2656,15 +2656,15 @@ body::before {
             </div>
           </div>
 
-        <button class="course-start-btn" onclick="openAuth('course','beginner','Beginner Trading Course')">🔓 Start Course — Enroll Now</button>
+        <button class="course-start-btn" onclick="handleCourseBtn('beginner','Beginner Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
         <div class="course-cta-footer">
-          <button class="course-start-btn" onclick="openAuth('course','beginner','Beginner Trading Course')">🔓 Start Course — Enroll Now</button>
+          <button class="course-start-btn" id="enrollBtn-beginner" onclick="handleCourseBtn('beginner','Beginner Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
       </div>
-      <div class="course-card fade-up">
+      <div class="course-card fade-up" id="courseCard-intermediate">
         <div class="course-head">
-          <div class="course-lock-badge">🔒 LOCKED</div>
+          <div class="course-lock-badge" id="lockBadge-intermediate">🔒 LOCKED</div>
           <div class="course-num">COURSE 02</div>
           <div class="course-title">Intermediate Trading Course</div>
           <div class="course-insight">Focused on helping traders transition from theory into structured execution and risk management. Bridges the gap between knowing and doing.</div>
@@ -2719,18 +2719,18 @@ body::before {
             </div>
           </div>
 
-        <button class="course-start-btn" onclick="openAuth('course','intermediate','Intermediate Trading Course')">🔓 Start Course — Enroll Now</button>
+        <button class="course-start-btn" onclick="handleCourseBtn('intermediate','Intermediate Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
         <div class="course-cta-footer">
-          <button class="course-start-btn" onclick="openAuth('course','intermediate','Intermediate Trading Course')">🔓 Start Course — Enroll Now</button>
+          <button class="course-start-btn" id="enrollBtn-intermediate" onclick="handleCourseBtn('intermediate','Intermediate Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
       </div>
 
       <!-- COURSE 03 -->
-      <div class="course-card fade-up">
+      <div class="course-card fade-up" id="courseCard-advanced">
         <div class="course-accent-bar c3"></div>
         <div class="course-head">
-          <div class="course-lock-badge">🔒 LOCKED</div>
+          <div class="course-lock-badge" id="lockBadge-advanced">🔒 LOCKED</div>
           <div class="course-num">COURSE 03</div>
           <div class="course-title">Advanced Trading Course</div>
           <div class="course-insight">Institutional-style trading concepts focused on market behavior, auction theory, and advanced execution. Built for traders ready to operate at the next level.</div>
@@ -2790,18 +2790,18 @@ body::before {
             </div>
           </div>
 
-        <button class="course-start-btn" onclick="openAuth('course','advanced','Advanced Trading Course')">🔓 Start Course — Enroll Now</button>
+        <button class="course-start-btn" onclick="handleCourseBtn('advanced','Advanced Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
         <div class="course-cta-footer">
-          <button class="course-start-btn" onclick="openAuth('course','advanced','Advanced Trading Course')">🔓 Start Course — Enroll Now</button>
+          <button class="course-start-btn" id="enrollBtn-advanced" onclick="handleCourseBtn('advanced','Advanced Trading Course',this)">🔓 Start Course — Enroll Now</button>
         </div>
       </div>
 
       <!-- COURSE 04 -->
-      <div class="course-card fade-up">
+      <div class="course-card fade-up" id="courseCard-propfirm">
         <div class="course-accent-bar c4"></div>
         <div class="course-head">
-          <div class="course-lock-badge">🔒 LOCKED</div>
+          <div class="course-lock-badge" id="lockBadge-propfirm">🔒 LOCKED</div>
           <div class="course-num">COURSE 04</div>
           <div class="course-title">Prop Firm Trading Program</div>
           <div class="course-insight">Built specifically for traders pursuing funded accounts and long-term capital allocation. Focus on challenge passing, account preservation, consistency, and payout sustainability.</div>
@@ -2850,10 +2850,10 @@ body::before {
             </div>
           </div>
 
-        <button class="course-start-btn" onclick="openAuth('course','propfirm','Prop Firm Trading Program')">🔓 Start Course — Enroll Now</button>
+        <button class="course-start-btn" onclick="handleCourseBtn('propfirm','Prop Firm Trading Program',this)">🔓 Start Course — Enroll Now</button>
         </div>
         <div class="course-cta-footer">
-          <button class="course-start-btn" onclick="openAuth('course','propfirm','Prop Firm Trading Program')">🔓 Start Course — Enroll Now</button>
+          <button class="course-start-btn" id="enrollBtn-propfirm" onclick="handleCourseBtn('propfirm','Prop Firm Trading Program',this)">🔓 Start Course — Enroll Now</button>
         </div>
       </div>
 
@@ -3873,9 +3873,11 @@ function buildPaymentDetails(method) {
   }).join('') + `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.78rem;color:var(--text3);font-family:var(--font-mono);">⚠ Send exact amount. Include your email as reference.</div>`;
 }
 
+let _receiptFile = null;
 function handleUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
+  _receiptFile = file;
   const prev = document.getElementById('uploadPreview');
   const nameEl = document.getElementById('uploadFileName');
   const zone = document.getElementById('uploadZone');
@@ -3884,23 +3886,30 @@ function handleUpload(event) {
   if (zone) zone.style.borderColor = 'var(--green)';
 }
 
-function submitReceipt() {
+async function submitReceipt() {
   const btn = document.getElementById('submitReceiptBtn');
   if (btn) { btn.textContent = 'Submitting…'; btn.disabled = true; }
-  setTimeout(() => {
-    showAuthStep(4);
-    // Show success mini modal
-    setTimeout(() => {
-      showSuccessModal(
-        'Receipt Submitted! 📧',
-        'Your payment receipt has been received. Our team will review it within 24–48 hours. You\'ll receive a confirmation email once approved.',
-        '✓',
-        'Done',
-        () => { closeSuccessModal(); closeAuth(); }
-      );
+
+  // Call Firebase submission if user is logged in
+  if (typeof window._fbSubmitPayment === 'function') {
+    const ok = await window._fbSubmitPayment(_receiptFile);
+    if (!ok) {
       if (btn) { btn.textContent = 'Save & Submit →'; btn.disabled = false; }
-    }, 400);
-  }, 1200);
+      return;
+    }
+  }
+
+  showAuthStep(4);
+  setTimeout(() => {
+    showSuccessModal(
+      'Receipt Submitted! 📧',
+      'Your payment receipt has been received. Our team will review it within 24–48 hours. You\'ll receive a confirmation email once approved.',
+      '✓',
+      'Done',
+      () => { closeSuccessModal(); closeAuth(); }
+    );
+    if (btn) { btn.textContent = 'Save & Submit →'; btn.disabled = false; }
+  }, 400);
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuth(); });
@@ -4803,16 +4812,16 @@ document.querySelectorAll('.course-card, .mentorship-card').forEach(el => observ
 </script>
 
 <!-- ══════════════════════════════════════════
-     FIREBASE AUTHENTICATION & FIRESTORE
+     FIREBASE — Auth + Firestore + Course Access
 ══════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, addDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ── Firebase Config ──────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyDozcA-cfejrnyx5yF2lW1w1_cjlgZWv1Q",
+  apiKey: "YOUR_API_KEY",
   authDomain: "sevenfx.firebaseapp.com",
   projectId: "sevenfx",
   storageBucket: "sevenfx.firebasestorage.app",
@@ -4901,18 +4910,8 @@ function updateNavAuth(user, role) {
   }
 }
 
-// ── Auth State Listener (keeps user logged in on refresh) ─
+// ── Auth State Listener — defined below with course loading ─
 let currentUserRole = 'user';
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    const isAdmin = await checkAdmin(user.email);
-    currentUserRole = isAdmin ? 'admin' : 'user';
-    updateNavAuth(user, currentUserRole);
-  } else {
-    currentUserRole = 'user';
-    updateNavAuth(null, 'user');
-  }
-});
 
 // ── SIGN UP ──────────────────────────────────────────────
 window.firebaseSignup = async function() {
@@ -5013,11 +5012,169 @@ window.firebaseLogout = async function() {
   try {
     await signOut(auth);
     updateNavAuth(null, 'user');
+    // Reset all course UI to locked state
+    applyCourseUI({});
     console.log('[SevenFX] Logged out successfully.');
   } catch (err) {
     console.error('[SevenFX Logout Error]', err.code, err.message);
   }
 };
+
+// ════════════════════════════════════════════════════
+// COURSE ACCESS CONTROL
+// ════════════════════════════════════════════════════
+
+const COURSE_IDS = ['beginner','intermediate','advanced','propfirm'];
+
+// Load user's approved courses from Firestore payments collection
+async function loadUserCourses(uid) {
+  try {
+    const q = query(
+      collection(db, 'payments'),
+      where('uid',    '==', uid),
+      where('status', '==', 'approved')
+    );
+    const snap = await getDocs(q);
+    const approved = {};
+    snap.forEach(d => { approved[d.data().courseId] = true; });
+    return approved;
+  } catch(e) {
+    console.warn('[SevenFX] loadUserCourses error:', e.message);
+    return {};
+  }
+}
+
+// Apply locked / pending / unlocked UI to every course card
+function applyCourseUI(approvedMap) {
+  COURSE_IDS.forEach(id => {
+    const card      = document.getElementById('courseCard-' + id);
+    const badge     = document.getElementById('lockBadge-'  + id);
+    const btnInner  = document.querySelector(`#courseCard-${id} .course-modules .course-start-btn`);
+    const btnFooter = document.getElementById('enrollBtn-' + id);
+
+    if (!card) return;
+
+    if (approvedMap[id]) {
+      // ✅ UNLOCKED
+      if (badge) { badge.textContent = '✅ ENROLLED'; badge.style.background = 'rgba(52,211,153,.15)'; badge.style.borderColor = 'rgba(52,211,153,.4)'; badge.style.color = '#34d399'; }
+      // Remove all 🔒 from module titles
+      card.querySelectorAll('.module-lock').forEach(el => { el.textContent = '✅'; el.style.color = '#34d399'; });
+      // Change enroll buttons to "Go to Course"
+      [btnInner, btnFooter].forEach(b => {
+        if (!b) return;
+        b.textContent = '▶ Go to Course';
+        b.style.background = 'linear-gradient(135deg,#34d399,#059669)';
+        b.onclick = () => showCourseContent(id);
+      });
+    } else {
+      // 🔒 LOCKED — default state
+      if (badge) { badge.textContent = '🔒 LOCKED'; badge.style.background = ''; badge.style.borderColor = ''; badge.style.color = ''; }
+      card.querySelectorAll('.module-lock').forEach(el => { el.textContent = '🔒'; el.style.color = ''; });
+      [btnInner, btnFooter].forEach(b => {
+        if (!b) return;
+        b.textContent = '🔓 Start Course — Enroll Now';
+        b.style.background = '';
+        b.onclick = null;
+        b.setAttribute('onclick', `handleCourseBtn('${id}','${coursePricing[id]?.name || id}',this)`);
+      });
+    }
+  });
+}
+
+// What happens when user clicks Enroll button
+window.handleCourseBtn = function(courseId, courseName, btn) {
+  const user = auth.currentUser;
+  if (!user) {
+    // Not logged in → open auth modal on signup tab
+    openAuth('course', courseId, courseName);
+    return;
+  }
+  // Logged in → check if already enrolled
+  loadUserCourses(user.uid).then(approved => {
+    if (approved[courseId]) {
+      showCourseContent(courseId);
+    } else {
+      // Logged in but not enrolled → go to payment step directly
+      authState.courseId = courseId;
+      const info = coursePricing[courseId] || {};
+      const el = document.getElementById('payCourseName');
+      const ep = document.getElementById('payCoursePrice');
+      if (el) el.textContent = info.name || courseName;
+      if (ep) ep.textContent = info.price || '—';
+      document.getElementById('authOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+      showAuthStep(2);
+    }
+  });
+};
+
+// Show course content modal (placeholder — expandable later)
+window.showCourseContent = function(courseId) {
+  const names = {
+    beginner:     'Beginner Trading Course',
+    intermediate: 'Intermediate Trading Course',
+    advanced:     'Advanced Trading Course',
+    propfirm:     'Prop Firm Trading Program',
+  };
+  showSuccessModal(
+    '▶ ' + (names[courseId] || courseId),
+    'Your course is unlocked! Full video lessons and materials are coming soon. In the meantime, check your Telegram group for access to all course content.',
+    '✅',
+    'Join Telegram Group',
+    () => { closeSuccessModal(); window.open('https://t.me/Seven7FxAcademy','_blank'); }
+  );
+};
+
+// Save payment record to Firestore payments collection
+window._fbSubmitPayment = async function(receiptFile) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert('You must be logged in to submit a payment.');
+    return false;
+  }
+  try {
+    const txRef = document.getElementById('txRef')?.value?.trim() || '';
+    const info  = coursePricing[authState.courseId] || {};
+
+    await addDoc(collection(db, 'payments'), {
+      uid:           user.uid,
+      email:         user.email,
+      courseId:      authState.courseId,
+      courseName:    info.name || authState.courseId,
+      coursePrice:   info.price || '—',
+      paymentMethod: authState.paymentMethod || '—',
+      txRef:         txRef,
+      receiptName:   receiptFile ? receiptFile.name : 'none',
+      status:        'pending',
+      submittedAt:   serverTimestamp(),
+    });
+
+    console.log('[SevenFX] Payment saved to Firestore — status: pending');
+    return true;
+  } catch(e) {
+    console.error('[SevenFX] Payment save error:', e.code, e.message);
+    alert('Failed to save payment: ' + e.message);
+    return false;
+  }
+};
+
+// ── Auth State Listener — loads user session + course access ──
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const [isAdminResult, approvedCourses] = await Promise.all([
+      checkAdmin(user.email),
+      loadUserCourses(user.uid)
+    ]);
+    currentUserRole = isAdminResult ? 'admin' : 'user';
+    updateNavAuth(user, currentUserRole);
+    applyCourseUI(approvedCourses);
+    console.log('[SevenFX] Courses loaded:', Object.keys(approvedCourses));
+  } else {
+    currentUserRole = 'user';
+    updateNavAuth(null, 'user');
+    applyCourseUI({});
+  }
+});
 
 </script>
 </body>
