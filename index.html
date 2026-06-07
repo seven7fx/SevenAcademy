@@ -3744,16 +3744,16 @@ body::before {
       </div>
       <div id="signupForm">
         <div class="auth-field"><label>Full Name</label><input type="text" id="authName" placeholder="Your full name"></div>
-        <div class="auth-field"><label>Gmail Address</label><input type="email" id="authEmail" placeholder="yourname@gmail.com" autocomplete="email"><div style="font-size:.72rem;color:var(--text3);margin-top:4px;font-family:var(--font-mono);">⚠ Only @gmail.com accounts accepted</div></div>
+        <div class="auth-field"><label>Email Address</label><input type="email" id="authEmail" placeholder="yourname@gmail.com or work@company.com" autocomplete="email"></div>
         <div class="auth-field"><label>Phone Number</label><input type="tel" id="authPhone" placeholder="+251 9XX XXX XXXX"></div>
-        <div class="auth-field"><label>Password</label><input type="password" id="authPass" placeholder="Min 8 chars, letters &amp; numbers" oninput="sfxCheckPass(this.value)"><div id="passStrengthHint" style="font-size:.72rem;margin-top:5px;font-family:var(--font-mono);display:none;"></div></div>
+        <div class="auth-field"><label>Password</label><input type="password" id="authPass" placeholder="Min 8 chars, mix letters &amp; numbers" oninput="sfxCheckPass(this.value)"><div id="passStrengthHint" style="font-size:.72rem;margin-top:5px;font-family:var(--font-mono);display:none;"></div></div>
         <div id="authErrSignup" style="display:none;color:var(--red);font-size:.8rem;margin-bottom:10px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);"></div>
         <button class="auth-btn-full" id="signupBtn" onclick="firebaseSignup()">Create Account →</button>
         <div class="auth-divider">or</div>
         <p style="font-size:.8rem;color:var(--text3);text-align:center;">Already have an account? <button onclick="switchTab('signin')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:.8rem;">Sign In</button></p>
       </div>
       <div id="signinForm" style="display:none;">
-        <div class="auth-field"><label>Gmail Address</label><input type="email" id="siEmail" placeholder="yourname@gmail.com" autocomplete="email"></div>
+        <div class="auth-field"><label>Email Address</label><input type="email" id="siEmail" placeholder="yourname@gmail.com or work@company.com" autocomplete="email"></div>
         <div class="auth-field"><label>Password</label><input type="password" id="siPass" placeholder="Your password"></div>
         <div id="authErrSignin" style="display:none;color:var(--red);font-size:.8rem;margin-bottom:10px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:8px;border:1px solid rgba(248,113,113,.2);"></div>
         <button class="auth-btn-full" id="signinBtn" onclick="firebaseSignin()">Sign In →</button>
@@ -5036,7 +5036,7 @@ import { getFirestore, doc, setDoc, getDoc, addDoc, collection, query, where, ge
 
 // ── Firebase Config ──────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyDozcA-cfejrnyx5yF2lW1w1_cjlgZWv1Q",
   authDomain: "sevenfx.firebaseapp.com",
   projectId: "sevenfx",
   storageBucket: "sevenfx.firebasestorage.app",
@@ -5045,14 +5045,23 @@ const firebaseConfig = {
   measurementId: "G-W8CHSRG322"
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+let app, auth, db;
+try {
+  app  = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db   = getFirestore(app);
+  console.log('[SevenFX] ✓ Firebase initialized. Project:', firebaseConfig.projectId);
+  console.log('[SevenFX] ✓ Auth domain:', firebaseConfig.authDomain);
+} catch(initErr) {
+  console.error('[SevenFX] ✗ Firebase init FAILED:', initErr.code, initErr.message);
+}
 
 // Explicitly set LOCAL persistence so user stays logged in after refresh
-setPersistence(auth, browserLocalPersistence).catch(e =>
-  console.warn('[SevenFX] Persistence warning:', e.message)
-);
+if (auth) {
+  setPersistence(auth, browserLocalPersistence).catch(e =>
+    console.warn('[SevenFX] Persistence warning:', e.message)
+  );
+}
 
 // ── Helpers ──────────────────────────────────────────────
 function showAuthErr(elId, msg) {
@@ -5087,7 +5096,7 @@ function friendlyError(code) {
     'auth/operation-not-allowed':  'Email/password sign-in is not enabled. Contact support.',
     'auth/unauthorized-domain':    'Domain not authorized. Contact support.',
   };
-  return map[code] || 'Something went wrong. Please try again.';
+  return map[code] || ('Error: ' + (code || 'unknown') + '. Check browser console (F12) for details.');
 }
 
 // ── Check if user is admin ───────────────────────────────
@@ -5137,36 +5146,40 @@ window.firebaseSignup = async function() {
   const pass  = (document.getElementById('authPass')?.value || '');
 
   // ── Validation ──
-  if (!name) {
+  if (!name.trim()) {
     showAuthErr('authErrSignup', 'Please enter your full name.'); return;
   }
-  // Gmail-only: must be a real @gmail.com address
   if (!email) {
-    showAuthErr('authErrSignup', 'Please enter your Gmail address.'); return;
+    showAuthErr('authErrSignup', 'Please enter your email address.'); return;
   }
-  if (!email.toLowerCase().endsWith('@gmail.com')) {
-    showAuthErr('authErrSignup', 'Only Gmail accounts are accepted (e.g. yourname@gmail.com).'); return;
-  }
-  // Gmail local part rules: 6–30 chars, letters/numbers/dots only, no dots at start/end/consecutive
-  const gmailLocal = email.split('@')[0];
-  const gmailLocalRegex = /^[a-zA-Z0-9]([a-zA-Z0-9.]{4,28})[a-zA-Z0-9]$/;
-  if (!gmailLocalRegex.test(gmailLocal) || gmailLocal.includes('..')) {
-    showAuthErr('authErrSignup', 'Please enter a valid Gmail address.'); return;
+  // Standard email format check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!emailRegex.test(email)) {
+    showAuthErr('authErrSignup', 'Please enter a valid email address (e.g. name@gmail.com).'); return;
   }
   // Password: min 8 chars, at least 1 letter, at least 1 number
   if (!pass || pass.length < 8) {
     showAuthErr('authErrSignup', 'Password must be at least 8 characters.'); return;
   }
   if (!/[a-zA-Z]/.test(pass)) {
-    showAuthErr('authErrSignup', 'Password must contain at least one letter.'); return;
+    showAuthErr('authErrSignup', 'Password must contain at least one letter (e.g. abc123xyz).'); return;
   }
   if (!/[0-9]/.test(pass)) {
-    showAuthErr('authErrSignup', 'Password must contain at least one number.'); return;
+    showAuthErr('authErrSignup', 'Password must contain at least one number (e.g. abc123xyz).'); return;
   }
 
   setBtn('signupBtn', 'Creating account…', true);
 
+  // Guard: Firebase must be initialized
+  if (!auth || !db) {
+    setBtn('signupBtn', 'Create Account →', false);
+    showAuthErr('authErrSignup', 'Firebase not initialized. Check your API key in the code.');
+    console.error('[SevenFX] auth or db is null — Firebase failed to initialize. Check your apiKey.');
+    return;
+  }
+
   try {
+    console.log('[SevenFX] Attempting signup for:', email);
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
     const user = cred.user;
 
@@ -5175,14 +5188,16 @@ window.firebaseSignup = async function() {
     const role = isAdmin ? 'admin' : 'user';
 
     // Save to Firestore users collection
-    await setDoc(doc(db, 'users', user.uid), {
-      uid: user.uid,
-      username: name,
-      email: email,
-      phone: phone || '',
+    const userData = {
+      uid:       user.uid,
+      username:  name,
+      email:     email,
+      phone:     phone || '',
       createdAt: serverTimestamp(),
-      role: role
-    });
+      role:      role
+    };
+    await setDoc(doc(db, 'users', user.uid), userData);
+    console.log('[SevenFX] ✓ Firestore user saved:', user.uid, '| role:', role);
 
     currentUserRole = role;
     updateNavAuth(user, role);
@@ -5223,15 +5238,23 @@ window.firebaseSignin = async function() {
   const email = (document.getElementById('siEmail')?.value || '').trim();
   const pass  = (document.getElementById('siPass')?.value || '');
 
-  if (!email) { showAuthErr('authErrSignin', 'Please enter your Gmail address.'); return; }
-  if (!email.toLowerCase().endsWith('@gmail.com')) {
-    showAuthErr('authErrSignin', 'Only Gmail accounts are accepted (e.g. yourname@gmail.com).'); return;
+  if (!email) { showAuthErr('authErrSignin', 'Please enter your email address.'); return; }
+  const siEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!siEmailRegex.test(email)) {
+    showAuthErr('authErrSignin', 'Please enter a valid email address.'); return;
   }
   if (!pass) { showAuthErr('authErrSignin', 'Please enter your password.'); return; }
 
   setBtn('signinBtn', 'Signing in…', true);
 
+  if (!auth) {
+    setBtn('signinBtn', 'Sign In →', false);
+    showAuthErr('authErrSignin', 'Firebase not initialized. Check your API key in the code.');
+    return;
+  }
+
   try {
+    console.log('[SevenFX] Attempting signin for:', email);
     const cred = await signInWithEmailAndPassword(auth, email, pass);
     const user = cred.user;
 
@@ -5409,7 +5432,8 @@ window._fbSubmitPayment = async function(receiptFile) {
 };
 
 // ── Auth State Listener — loads user session + course access ──
-onAuthStateChanged(auth, async (user) => {
+if (!auth) { console.error('[SevenFX] onAuthStateChanged skipped — auth is null'); }
+else onAuthStateChanged(auth, async (user) => {
   if (user) {
     const [isAdminResult, approvedCourses] = await Promise.all([
       checkAdmin(user.email),
