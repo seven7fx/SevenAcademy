@@ -2252,6 +2252,7 @@ body::before {
   .mentorship-card { grid-template-columns: 1fr; gap: 24px; }
   .mentorship-features { grid-template-columns: 1fr 1fr; }
 }
+@media (max-width: 900px) {
   .nav-links { display: none; }
   .hamburger { display: flex; }
   .hero-inner { grid-template-columns: 1fr; }
@@ -3482,13 +3483,13 @@ body::before {
 </section>
 
 <!-- EXPERTISE -->
-<section id="expertise">
+<section id="expertise" style="padding:48px 5% 52px;">
   <div class="section-inner">
     <div class="fade-up">
       <div class="section-tag">Expertise</div>
       <h2 class="section-title">Core Areas of Focus</h2>
       <div class="divider"></div>
-      <p class="section-sub">Built around disciplined methodology — not prediction, not gut feel. Each area reinforces the others within the framework.</p>
+      <p class="section-sub">Each area reinforces the others within the SevenFX execution framework.</p>
     </div>
     <div class="expertise-grid">
       <div class="exp-card fade-up">
@@ -3741,7 +3742,7 @@ body::before {
       <div class="sm-message" id="smMessage">Your SevenFX Academy account has been successfully created. Redirecting you to payment...</div>
       <div class="sm-btn-row" id="smBtnRow">
         <button class="sm-btn-primary" id="smPrimaryBtn" onclick="closeSuccessModal()">Continue</button>
-        <button class="sm-btn-secondary" onclick="closeSuccessModal()">Close</button>
+        <button class="sm-btn-secondary" id="smSecondaryBtn" onclick="closeSuccessModal()" style="display:none;">Close</button>
       </div>
     </div>
   </div>
@@ -4076,6 +4077,9 @@ function showSuccessModal(heading, message, icon, primaryLabel, primaryAction, s
   const primaryBtn = document.getElementById('smPrimaryBtn');
   primaryBtn.textContent = primaryLabel || 'Continue';
   primaryBtn.onclick = primaryAction || closeSuccessModal;
+  // Hide the email resend button by default on each open
+  const secBtn = document.getElementById('smSecondaryBtn');
+  if (secBtn) { secBtn.style.display = 'none'; }
   // Inject/update optional second action button
   const btnRow = document.getElementById('smBtnRow');
   let extraBtn = document.getElementById('smExtraDashBtn');
@@ -5514,6 +5518,35 @@ window.showCourseContent = async function(courseId) {
     return;
   }
 
+  // Gate 1b: email must be verified for premium course access
+  if (!user.emailVerified) {
+    // Reload user to get latest verification status
+    try { await user.reload(); } catch(e) {}
+    if (!auth.currentUser?.emailVerified) {
+      showAccessDeniedModal(
+        '📧 Email Verification Required',
+        'Please verify your email address before accessing course content.',
+        'Check your inbox for the verification email from SevenFX and click the link to verify. Then refresh and try again.',
+        false
+      );
+      // Offer resend
+      const overlay = document.getElementById('successModalOverlay');
+      const secBtn  = document.getElementById('smSecondaryBtn');
+      if (secBtn) {
+        secBtn.style.display = 'inline-flex';
+        secBtn.textContent   = '↺ Resend Verification Email';
+        secBtn.onclick = async () => {
+          try {
+            await sendEmailVerification(user);
+            secBtn.textContent = '✓ Email Sent!';
+            setTimeout(() => { secBtn.textContent = '↺ Resend Verification Email'; }, 3000);
+          } catch(e2) { secBtn.textContent = 'Too many requests — wait a moment'; }
+        };
+      }
+      return;
+    }
+  }
+
   // Gate 2: live Firestore read — check courseAccess doc
   const accessDocId = user.uid + '_' + courseId;
   let hasAccess = false;
@@ -5726,6 +5759,28 @@ window.openProfile = async function() {
     document.getElementById('profileJoinedVal').textContent = '—';
   }
 
+  // Show email verification status banner
+  let verBannerEl = document.getElementById('profileVerBanner');
+  if (!verBannerEl) {
+    verBannerEl = document.createElement('div');
+    verBannerEl.id = 'profileVerBanner';
+    document.getElementById('profileBody')?.prepend(verBannerEl);
+  }
+  if (!user.emailVerified) {
+    verBannerEl.innerHTML = `<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;">
+      <span style="font-size:1rem;flex-shrink:0;">⚠️</span>
+      <div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--gold);margin-bottom:4px;">Email Not Verified</div>
+        <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px;">Verify your email to access purchased courses. Check your inbox or spam folder.</div>
+        <button onclick="resendVerificationEmail()" style="font-size:.75rem;padding:5px 12px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--gold);border-radius:7px;cursor:pointer;font-family:var(--font-body);font-weight:600;" id="resendVerBtn">↺ Resend Verification Email</button>
+      </div>
+    </div>`;
+  } else {
+    verBannerEl.innerHTML = `<div style="background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:.82rem;color:var(--green);">
+      ✅ <strong>Email Verified</strong> — Full platform access active
+    </div>`;
+  }
+
   // Enrolled courses
   const approved = await loadUserCourses(user.uid);
   const courseNames = {
@@ -5764,6 +5819,22 @@ window.closeProfile = function() {
 };
 window.profileOverlayClick = function(e) {
   if (e.target.id === 'profileOverlay') closeProfile();
+};
+
+window.resendVerificationEmail = async function() {
+  const btn = document.getElementById('resendVerBtn');
+  const user = auth?.currentUser;
+  if (!user || !btn) return;
+  btn.textContent = 'Sending…';
+  btn.disabled    = true;
+  try {
+    await sendEmailVerification(user);
+    btn.textContent = '✓ Sent! Check your inbox';
+    setTimeout(() => { btn.textContent = '↺ Resend Verification Email'; btn.disabled = false; }, 5000);
+  } catch(e) {
+    btn.textContent = 'Try again in a moment';
+    btn.disabled    = false;
+  }
 };
 
 // ════════════════════════════════════════════════════════
@@ -6238,7 +6309,7 @@ window.firebaseGoogleSignIn = async function() {
       <h3>My Profile</h3>
       <button class="profile-close" onclick="closeProfile()">✕</button>
     </div>
-    <div class="profile-body">
+    <div class="profile-body" id="profileBody">
       <div class="profile-avatar-row">
         <div class="profile-avatar" id="profileAvatar">?</div>
         <div>
