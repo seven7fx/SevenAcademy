@@ -4761,9 +4761,11 @@ setInterval(updateTimers, 1000);
 updateTimers();
 
 // ══════════════════════════════════════════
-// NEWS (Static — replace with API)
 // ══════════════════════════════════════════
-const newsData = [
+// NEWS — Live economic calendar via Finnhub free API
+// Falls back to static data if API unavailable
+// ══════════════════════════════════════════
+const newsDataFallback = [
   { time: '08:30', currency: 'USD', headline: 'Federal Reserve Holds Rates Steady — Signals Data-Dependent Approach for Remainder of 2026', impact: 'high' },
   { time: '10:00', currency: 'EUR', headline: 'ECB President Lagarde Comments on Inflation Trajectory and Future Rate Pathway', impact: 'high' },
   { time: '12:30', currency: 'GBP', headline: 'UK Employment Data Beats Expectations — Unemployment Drops to 4.1%', impact: 'high' },
@@ -4772,10 +4774,10 @@ const newsData = [
   { time: '16:00', currency: 'EUR', headline: 'Eurozone PMI Composite Final Reading Released — Manufacturing Remains in Contraction', impact: 'low' },
 ];
 
-function buildNews() {
+function renderNews(items) {
   const grid = document.getElementById('newsGrid');
-  const now = new Date();
-  grid.innerHTML = newsData.map(n => `
+  if (!grid) return;
+  grid.innerHTML = items.map(n => `
     <div class="news-card" style="opacity:1;transform:none;">
       <div class="news-meta">
         <span class="impact-dot ${n.impact}"></span>
@@ -4786,6 +4788,34 @@ function buildNews() {
       <div class="news-impact-label ${n.impact}">${n.impact.toUpperCase()} IMPACT</div>
     </div>
   `).join('');
+}
+
+async function buildNews() {
+  // Try Finnhub free economic calendar (no key needed for basic endpoint)
+  const today = new Date();
+  const from  = today.toISOString().slice(0,10);
+  const to    = new Date(today.getTime() + 2*86400000).toISOString().slice(0,10);
+  try {
+    const r = await fetch(
+      `https://finnhub.io/api/v1/calendar/economic?from=${from}&to=${to}&token=sandbox_c9rj7piad3ie5uuqciqg`,
+      { cache: 'no-cache' }
+    );
+    if (!r.ok) throw new Error('Finnhub unavailable');
+    const data = await r.json();
+    const events = (data.economicCalendar || []).slice(0, 6);
+    if (events.length === 0) throw new Error('No events returned');
+    const impactMap = { '3': 'high', '2': 'med', '1': 'low', '0': 'low' };
+    const items = events.map(ev => ({
+      time:     (ev.time || '00:00').slice(0,5),
+      currency: ev.country || 'USD',
+      headline: ev.event   || 'Economic Release',
+      impact:   impactMap[String(ev.impact)] || 'low',
+    }));
+    renderNews(items);
+  } catch(e) {
+    // Live fetch failed — render fallback static data
+    renderNews(newsDataFallback);
+  }
 }
 buildNews();
 document.querySelectorAll('#newsGrid .fade-up').forEach(el => observer.observe(el));
