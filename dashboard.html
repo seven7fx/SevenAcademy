@@ -752,7 +752,7 @@ a { color:inherit; text-decoration:none; }
         <div style="flex:1;">
           <div style="font-weight:700;color:var(--gold);font-size:.88rem;margin-bottom:4px;">Email Verification Required</div>
           <div style="font-size:.82rem;color:var(--text2);margin-bottom:10px;">Please verify your email to access course content. Check your inbox (and spam) for the verification email.</div>
-          <button id="dashResendBtn" onclick="dashResendVerification()" style="font-size:.78rem;padding:6px 14px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--gold);border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600;transition:all .2s;">↺ Resend Verification Email</button>
+          <button id="dashResendBtn" onclick="dashResendVerification()" style="font-size:.78rem;padding:6px 14px;background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);color:var(--gold);border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600;transition:all .2s;">↺ Resend Verification Email</button> <button onclick="dashCheckVerified()" style="font-size:.78rem;padding:6px 14px;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);color:var(--green);border-radius:8px;cursor:pointer;font-family:var(--font-body);font-weight:600;transition:all .2s;">✓ I already verified</button>
         </div>
       </div>
 
@@ -1658,7 +1658,41 @@ const MARKETS = [
 ];
 
 let mktPrices = {};
-MARKETS.forEach(m => mktPrices[m.sym] = m.base);
+let mktPrev   = {};
+MARKETS.forEach(m => { mktPrices[m.sym] = m.base; mktPrev[m.sym] = m.base; });
+
+// Fetch real forex rates from open.er-api.com (free, no key, CORS-ok)
+// Supplements with minor drift for pairs not in the API
+async function fetchLivePricesDB() {
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('ER-API unavailable');
+    const data = await r.json();
+    const rates = data.rates || {};
+    // EUR/USD = 1 / rates.EUR
+    if (rates.EUR) { const v = 1 / rates.EUR; mktPrev['EURUSD'] = mktPrices['EURUSD']; mktPrices['EURUSD'] = parseFloat(v.toFixed(4)); }
+    // GBP/USD = 1 / rates.GBP
+    if (rates.GBP) { const v = 1 / rates.GBP; mktPrev['GBPUSD'] = mktPrices['GBPUSD']; mktPrices['GBPUSD'] = parseFloat(v.toFixed(4)); }
+    // GBP/JPY = GBP/USD * USD/JPY
+    if (rates.GBP && rates.JPY) { const v = rates.JPY / rates.GBP; mktPrev['GBPJPY'] = mktPrices['GBPJPY']; mktPrices['GBPJPY'] = parseFloat(v.toFixed(2)); }
+  } catch(e) {
+    // API failed — apply small drift so display isn't frozen
+    MARKETS.forEach(m => {
+      mktPrev[m.sym] = mktPrices[m.sym];
+      const drift = (Math.random() - 0.5) * 0.0003 * mktPrices[m.sym];
+      mktPrices[m.sym] = Math.max(0, mktPrices[m.sym] + drift);
+    });
+  }
+  // For BTC/ETH/XAU/NAS100: apply small drift (no free CORS endpoint without key)
+  ['BTCUSD','ETHUSD','XAUUSD','NAS100'].forEach(sym => {
+    mktPrev[sym] = mktPrices[sym];
+    const m = MARKETS.find(x => x.sym === sym);
+    const drift = (Math.random() - 0.5) * 0.0005 * mktPrices[sym];
+    mktPrices[sym] = Math.max(0, mktPrices[sym] + drift);
+  });
+  buildMarketsGrid();
+  buildTicker();
+}
 
 function buildMarketsGrid() {
   const g  = document.getElementById('marketsGrid');
@@ -1669,44 +1703,30 @@ function buildMarketsGrid() {
 }
 
 function marketCardHtml(m) {
-  const p = mktPrices[m.sym];
-  const chg = ((Math.random() * 0.4) - 0.2).toFixed(2);
-  const dir = parseFloat(chg) >= 0 ? 'up' : 'dn';
+  const p    = mktPrices[m.sym];
+  const prev = mktPrev[m.sym] || m.base;
+  const rawChg = prev > 0 ? ((p - prev) / prev * 100) : 0;
+  const chg  = Math.abs(rawChg).toFixed(2);
+  const dir  = rawChg >= 0 ? 'up' : 'dn';
   return `<div class="market-card" id="mkt-${m.sym}">
     <div class="market-sym">${m.sym}</div>
     <div class="market-price">${p.toFixed(m.decimals)}</div>
-    <div class="market-chg ${dir}">${dir==='up'?'▲':'▼'} ${Math.abs(chg)}%</div>
+    <div class="market-chg ${dir}">${dir==='up'?'▲':'▼'} ${chg}%</div>
   </div>`;
 }
 
-function updateMarketPrices() {
-  MARKETS.forEach(m => {
-    const drift = (Math.random() - 0.5) * 0.0004 * m.base;
-    mktPrices[m.sym] = Math.max(0, mktPrices[m.sym] + drift);
-    const els = document.querySelectorAll(`#mkt-${m.sym}`);
-    const p    = mktPrices[m.sym];
-    const chg  = ((Math.random() * 0.4) - 0.2).toFixed(2);
-    const dir  = parseFloat(chg) >= 0 ? 'up' : 'dn';
-    els.forEach(el => {
-      el.querySelector('.market-price').textContent = p.toFixed(m.decimals);
-      const chgEl = el.querySelector('.market-chg');
-      chgEl.textContent = (dir==='up'?'▲':'▼') + ' ' + Math.abs(chg) + '%';
-      chgEl.className = 'market-chg ' + dir;
-    });
-  });
-  buildTicker();
-}
-
 function startMarketUpdates() {
-  buildTicker();
-  setInterval(updateMarketPrices, 30000);
+  fetchLivePricesDB();           // immediate fetch on load
+  setInterval(fetchLivePricesDB, 60000); // refresh every 60 s
 }
 
 function buildTicker() {
   const html = [...MARKETS, ...MARKETS].map(m => {
-    const p   = mktPrices[m.sym];
-    const dir = Math.random() > 0.5 ? 'up' : 'dn';
-    const chg = (Math.random()*0.35).toFixed(2);
+    const p    = mktPrices[m.sym];
+    const prev = mktPrev[m.sym] || m.base;
+    const rawC = prev > 0 ? ((p - prev) / prev * 100) : 0;
+    const dir  = rawC >= 0 ? 'up' : 'dn';
+    const chg  = Math.abs(rawC).toFixed(2);
     return `<div class="ticker-item">
       <div class="ticker-dot ${dir}"></div>
       <span class="ticker-sym">${m.sym}</span>
@@ -1778,8 +1798,37 @@ window.dashResendVerification = async function() {
     btn.textContent = '✓ Email Sent! Check your inbox';
     setTimeout(() => { btn.textContent = '↺ Resend Verification Email'; btn.disabled = false; }, 5000);
   } catch(e) {
-    btn.textContent = 'Please wait before retrying';
+    if (e.code === 'auth/too-many-requests') {
+      btn.textContent = 'Please wait — too many requests';
+    } else {
+      btn.textContent = 'Error: ' + (e.message || e.code);
+    }
     setTimeout(() => { btn.textContent = '↺ Resend Verification Email'; btn.disabled = false; }, 30000);
+  }
+};
+
+// Check if the user has verified since the page loaded (called by "I already verified" button)
+window.dashCheckVerified = async function() {
+  const user = auth?.currentUser;
+  if (!user) return;
+  try {
+    await user.reload();
+    const refreshed = auth.currentUser;
+    const verBanner = document.getElementById('dashVerBanner');
+    if (refreshed?.emailVerified) {
+      if (verBanner) verBanner.style.display = 'none';
+      // Update all verification badges
+      const profStatVerify = document.getElementById('profStatVerify');
+      if (profStatVerify) { profStatVerify.textContent = '✓ Verified'; profStatVerify.className = 'badge badge-approved'; }
+      const profileVerBadge = document.getElementById('profileVerBadge');
+      if (profileVerBadge) { profileVerBadge.textContent = '✓ Verified'; profileVerBadge.className = 'badge badge-approved'; }
+      const statVerified = document.getElementById('statVerified');
+      if (statVerified) statVerified.textContent = '✓';
+    } else {
+      alert('Email not yet verified. Please click the link in the email we sent you, then try again.');
+    }
+  } catch(e) {
+    alert('Could not check status: ' + e.message);
   }
 };
 
