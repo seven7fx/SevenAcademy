@@ -1036,69 +1036,69 @@ td.strong{color:var(--text);font-weight:600;}
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users — read own doc; admin reads all
+    // Helper: check if caller is admin
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users: own doc only, or admin reads all
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
       allow read: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+        (request.auth.uid == uid || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Admins — read own doc to check admin status
-    match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+    // Admins: any authenticated user can read (needed for self-check)
+    match /admins/{docId} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
     }
 
-    // Payments — user creates/reads own; admin reads/writes all
-    match /payments/{id} {
+    // Payments: user reads own, admin reads all
+    match /payments/{docId} {
+      allow read:  if request.auth != null &&
+        (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if request.auth != null;
-      allow read: if request.auth != null &&
-        (resource.data.uid == request.auth.uid ||
-         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin');
-      allow update, delete: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Course Access — user reads own; admin reads/writes all
-    match /courseAccess/{id} {
-      allow read: if request.auth != null &&
-        (resource.data.uid == request.auth.uid ||
-         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin');
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Course access: user reads own, admin reads/writes all
+    match /courseAccess/{docId} {
+      allow read:  if request.auth != null &&
+        (resource.data.uid == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
     }
 
-    // Community — anyone reads; admin writes
-    match /community/{id} {
-      allow read: if true;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Courses: public read, admin write
+    match /courses/{docId} {
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
-    // Announcements — anyone reads; admin writes
-    match /announcements/{id} {
-      allow read: if true;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Settings: public read, admin write
+    match /settings/{docId} {
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
-    // Audit Logs — admin only
-    match /auditLogs/{id} {
-      allow read, write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Announcements: public read, admin write
+    match /announcements/{docId} {
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
-    // Settings — admin reads/writes; authenticated users read
-    match /settings/{id} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Community: public read, admin write
+    match /community/{docId} {
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
-    // Partners — anyone reads; admin writes
-    match /partners/{id} {
-      allow read: if true;
-      allow write: if request.auth != null &&
-        get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin';
+    // Audit logs: admin only
+    match /auditLogs/{docId} {
+      allow read, write: if isAdmin();
     }
   }
 }</div>
@@ -1523,12 +1523,37 @@ window.adminLogout = async function() {
 // DASHBOARD
 // ══════════════════════════════════════════════
 async function loadDashboard() {
+  console.log('[Dashboard] Loading — admin UID:', currentAdmin?.uid, 'email:', currentAdmin?.email);
   try {
-    const [usersSnap, paymentsSnap, accessSnap] = await Promise.all([
-      getDocs(collection(db,'users')),
-      getDocs(collection(db,'payments')),
-      getDocs(collection(db,'courseAccess')),
-    ]);
+    // Query each collection independently so one failure doesn't block others
+    let usersSnap, paymentsSnap, accessSnap;
+
+    try {
+      console.log('[Dashboard] Querying: users');
+      usersSnap = await getDocs(collection(db,'users'));
+      console.log('[Dashboard] users OK — count:', usersSnap.size);
+    } catch(e) {
+      console.error('[Dashboard] users FAILED:', e.code, e.message);
+      usersSnap = { size: '?', forEach: ()=>{} };
+    }
+
+    try {
+      console.log('[Dashboard] Querying: payments');
+      paymentsSnap = await getDocs(collection(db,'payments'));
+      console.log('[Dashboard] payments OK — count:', paymentsSnap.size);
+    } catch(e) {
+      console.error('[Dashboard] payments FAILED:', e.code, e.message);
+      paymentsSnap = { size: '?', forEach: ()=>{} };
+    }
+
+    try {
+      console.log('[Dashboard] Querying: courseAccess');
+      accessSnap = await getDocs(collection(db,'courseAccess'));
+      console.log('[Dashboard] courseAccess OK — count:', accessSnap.size);
+    } catch(e) {
+      console.error('[Dashboard] courseAccess FAILED:', e.code, e.message);
+      accessSnap = { size: '?', forEach: ()=>{} };
+    }
 
     let pending=0, approved=0;
     paymentsSnap.forEach(d => {
@@ -1602,7 +1627,13 @@ async function loadUsers() {
       try {
         snap = await getDocs(collection(db,'users'));
       } catch(e2) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="6" style="color:var(--red);">Permission denied reading users.<br><small>Ensure Firestore rules: allow read for admins on /users collection. ${esc(e2.message)}</small></td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="6" style="color:var(--red);">
+      Permission denied reading users collection.<br>
+      <small style="color:var(--text3);">
+        Fix: In Firebase Console → Firestore → Rules, paste the rules from the Settings → Firestore Rules section of this dashboard.<br>
+        Error: ${esc(e2.message)}
+      </small>
+    </td></tr>`;
         return;
       }
     }
